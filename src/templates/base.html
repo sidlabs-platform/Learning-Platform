@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learning Platform — interactive courses for GitHub tools and practices">
+    <title>{% block title %}Learning Platform{% endblock %}</title>
+
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    {% block head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ================================================================
+         Navigation Bar
+    ================================================================= -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="navbar-inner">
+
+            <!-- Brand / Logo -->
+            <a href="/" class="nav-brand" aria-label="Learning Platform home">
+                <span class="nav-brand-icon" aria-hidden="true">🎓</span>
+                <span class="nav-brand-text">Learning Platform</span>
+            </a>
+
+            <!-- Hamburger toggle (mobile) -->
+            <button
+                class="nav-toggle"
+                aria-label="Toggle navigation menu"
+                aria-expanded="false"
+                aria-controls="nav-menu"
+                onclick="toggleNavMenu(this)"
+            >
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+                <span class="hamburger-bar"></span>
+            </button>
+
+            <!-- Nav links -->
+            <div class="nav-menu" id="nav-menu" role="menubar">
+                {% if user %}
+                    {% if user.role == "admin" %}
+                        <a href="/admin" class="nav-link" role="menuitem">Admin Dashboard</a>
+                        <a href="/admin/courses" class="nav-link" role="menuitem">Courses</a>
+                        <a href="/admin/ai/generate" class="nav-link" role="menuitem">AI Generate</a>
+                    {% else %}
+                        <a href="/dashboard" class="nav-link" role="menuitem">Dashboard</a>
+                        <a href="/catalog" class="nav-link" role="menuitem">Catalog</a>
+                    {% endif %}
+                {% else %}
+                    <a href="/catalog" class="nav-link" role="menuitem">Catalog</a>
+                {% endif %}
+            </div>
+
+            <!-- User area -->
+            <div class="nav-user-area">
+                {% if user %}
+                    <span class="nav-user-name" title="{{ user.name | e }}">
+                        <span class="nav-user-avatar" aria-hidden="true">
+                            {{ user.name[0] | upper }}
+                        </span>
+                        <span class="nav-user-label">{{ user.name | e }}</span>
+                    </span>
+                    <a href="/auth/logout" class="btn btn-secondary btn-sm" role="button">Logout</a>
+                {% else %}
+                    <a href="/auth/login" class="btn btn-primary btn-sm" role="button">Sign In</a>
+                {% endif %}
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- ================================================================
+         Flash / Notification Messages
+    ================================================================= -->
+    {% if request %}
+        {% set flash_success = request.query_params.get('success') %}
+        {% set flash_error   = request.query_params.get('error')   %}
+        {% set flash_info    = request.query_params.get('info')    %}
+        {% if flash_success %}
+        <div class="alert alert-success alert-dismissible" role="alert" aria-live="polite">
+            <span class="alert-icon" aria-hidden="true">✓</span>
+            {{ flash_success | e }}
+            <button class="alert-close" onclick="dismissAlert(this)" aria-label="Dismiss notification">×</button>
+        </div>
+        {% endif %}
+        {% if flash_error %}
+        <div class="alert alert-danger alert-dismissible" role="alert" aria-live="assertive">
+            <span class="alert-icon" aria-hidden="true">✕</span>
+            {{ flash_error | e }}
+            <button class="alert-close" onclick="dismissAlert(this)" aria-label="Dismiss notification">×</button>
+        </div>
+        {% endif %}
+        {% if flash_info %}
+        <div class="alert alert-info alert-dismissible" role="alert" aria-live="polite">
+            <span class="alert-icon" aria-hidden="true">ℹ</span>
+            {{ flash_info | e }}
+            <button class="alert-close" onclick="dismissAlert(this)" aria-label="Dismiss notification">×</button>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- ================================================================
+         Main Content
+    ================================================================= -->
+    <main class="main-content" id="main-content" tabindex="-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ================================================================
+         Footer
+    ================================================================= -->
+    <footer class="site-footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-inner">
+                <span class="footer-brand">🎓 Learning Platform</span>
+                <span class="footer-copy">
+                    &copy; {{ 2024 }} Learning Platform. All rights reserved.
+                </span>
+                <nav class="footer-nav" aria-label="Footer navigation">
+                    <a href="/catalog">Catalog</a>
+                    {% if user and user.role == "admin" %}
+                    <a href="/admin">Admin</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================================================================
+         Scripts
+    ================================================================= -->
+    <script src="/static/js/utils.js"></script>
+
+    <script>
+        /**
+         * Toggle the mobile navigation menu open/closed.
+         * @param {HTMLElement} btn - The hamburger button element.
+         */
+        function toggleNavMenu(btn) {
+            var menu = document.getElementById('nav-menu');
+            var expanded = btn.getAttribute('aria-expanded') === 'true';
+            btn.setAttribute('aria-expanded', String(!expanded));
+            menu.classList.toggle('nav-menu--open', !expanded);
+        }
+
+        /**
+         * Dismiss a dismissible alert banner.
+         * @param {HTMLElement} btn - The close button inside the alert.
+         */
+        function dismissAlert(btn) {
+            var alert = btn.closest('.alert-dismissible');
+            if (alert) {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.2s ease';
+                setTimeout(function () { alert.remove(); }, 220);
+            }
+        }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>
