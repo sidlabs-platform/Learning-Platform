@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "generated_by": "3-epic-and-tasks-agent",
+    "generated_at": "2026-03-26",
+    "total_tasks": 46,
+    "backend_tasks": 37,
+    "frontend_tasks": 9,
+    "total_epics": 7,
+    "total_stories": 26
+  },
+  "tasks": {
+    "TASK-001": {
+      "title": "Initialise project structure and pyproject.toml",
+      "type": "backend",
+      "dependencies": [],
+      "story": "STORY-001",
+      "epic": "EPIC-001"
+    },
+    "TASK-002": {
+      "title": "Implement pydantic-settings configuration module",
+      "type": "backend",
+      "dependencies": ["TASK-001"],
+      "story": "STORY-001",
+      "epic": "EPIC-001"
+    },
+    "TASK-003": {
+      "title": "Bootstrap FastAPI application with middleware",
+      "type": "backend",
+      "dependencies": ["TASK-002"],
+      "story": "STORY-001",
+      "epic": "EPIC-001"
+    },
+    "TASK-004": {
+      "title": "Implement SQLAlchemy base, engine, and session",
+      "type": "backend",
+      "dependencies": ["TASK-002"],
+      "story": "STORY-002",
+      "epic": "EPIC-001"
+    },
+    "TASK-005": {
+      "title": "Implement all 10 SQLAlchemy ORM models",
+      "type": "backend",
+      "dependencies": ["TASK-004"],
+      "story": "STORY-002",
+      "epic": "EPIC-001"
+    },
+    "TASK-006": {
+      "title": "Set up Alembic and initial schema migration",
+      "type": "backend",
+      "dependencies": ["TASK-005"],
+      "story": "STORY-002",
+      "epic": "EPIC-001"
+    },
+    "TASK-007": {
+      "title": "Implement database seed script for 3 starter courses",
+      "type": "backend",
+      "dependencies": ["TASK-006", "TASK-013"],
+      "story": "STORY-003",
+      "epic": "EPIC-001"
+    },
+    "TASK-008": {
+      "title": "Implement auth Pydantic models",
+      "type": "backend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-004",
+      "epic": "EPIC-002"
+    },
+    "TASK-009": {
+      "title": "Implement auth service (password, JWT, authenticate_user)",
+      "type": "backend",
+      "dependencies": ["TASK-005", "TASK-008"],
+      "story": "STORY-004",
+      "epic": "EPIC-002"
+    },
+    "TASK-010": {
+      "title": "Implement RBAC dependency functions",
+      "type": "backend",
+      "dependencies": ["TASK-009"],
+      "story": "STORY-005",
+      "epic": "EPIC-002"
+    },
+    "TASK-011": {
+      "title": "Implement auth router (login, logout, me endpoints)",
+      "type": "backend",
+      "dependencies": ["TASK-009", "TASK-010"],
+      "story": "STORY-004",
+      "epic": "EPIC-002"
+    },
+    "TASK-012": {
+      "title": "Write auth service tests",
+      "type": "backend",
+      "dependencies": ["TASK-011"],
+      "story": "STORY-004",
+      "epic": "EPIC-002"
+    },
+    "TASK-013": {
+      "title": "Implement course management Pydantic models",
+      "type": "backend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-006",
+      "epic": "EPIC-003"
+    },
+    "TASK-014": {
+      "title": "Implement Markdown sanitiser (bleach wrapper)",
+      "type": "backend",
+      "dependencies": ["TASK-001"],
+      "story": "STORY-006",
+      "epic": "EPIC-003"
+    },
+    "TASK-015": {
+      "title": "Implement course management service (course CRUD + catalog)",
+      "type": "backend",
+      "dependencies": ["TASK-005", "TASK-013", "TASK-014"],
+      "story": "STORY-006",
+      "epic": "EPIC-003"
+    },
+    "TASK-016": {
+      "title": "Implement module and lesson service functions",
+      "type": "backend",
+      "dependencies": ["TASK-015"],
+      "story": "STORY-007",
+      "epic": "EPIC-003"
+    },
+    "TASK-017": {
+      "title": "Implement quiz question service functions",
+      "type": "backend",
+      "dependencies": ["TASK-016"],
+      "story": "STORY-007",
+      "epic": "EPIC-003"
+    },
+    "TASK-018": {
+      "title": "Implement course management router",
+      "type": "backend",
+      "dependencies": ["TASK-015", "TASK-016", "TASK-017", "TASK-010", "TASK-011"],
+      "story": "STORY-006",
+      "epic": "EPIC-003"
+    },
+    "TASK-019": {
+      "title": "Write course management tests",
+      "type": "backend",
+      "dependencies": ["TASK-018", "TASK-007"],
+      "story": "STORY-006",
+      "epic": "EPIC-003"
+    },
+    "TASK-020": {
+      "title": "Implement progress tracking Pydantic models",
+      "type": "backend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-009",
+      "epic": "EPIC-004"
+    },
+    "TASK-021": {
+      "title": "Implement enrollment service",
+      "type": "backend",
+      "dependencies": ["TASK-005", "TASK-020"],
+      "story": "STORY-009",
+      "epic": "EPIC-004"
+    },
+    "TASK-022": {
+      "title": "Implement progress recording service",
+      "type": "backend",
+      "dependencies": ["TASK-021", "TASK-005"],
+      "story": "STORY-010",
+      "epic": "EPIC-004"
+    },
+    "TASK-023": {
+      "title": "Implement auto-completion and enrollment status machine",
+      "type": "backend",
+      "dependencies": ["TASK-022", "TASK-017"],
+      "story": "STORY-010",
+      "epic": "EPIC-004"
+    },
+    "TASK-024": {
+      "title": "Implement quiz submission service",
+      "type": "backend",
+      "dependencies": ["TASK-021", "TASK-017", "TASK-023"],
+      "story": "STORY-011",
+      "epic": "EPIC-004"
+    },
+    "TASK-025": {
+      "title": "Implement progress tracking router",
+      "type": "backend",
+      "dependencies": ["TASK-021", "TASK-022", "TASK-023", "TASK-024", "TASK-010"],
+      "story": "STORY-009",
+      "epic": "EPIC-004"
+    },
+    "TASK-026": {
+      "title": "Write progress tracking tests",
+      "type": "backend",
+      "dependencies": ["TASK-025"],
+      "story": "STORY-010",
+      "epic": "EPIC-004"
+    },
+    "TASK-027": {
+      "title": "Implement 5 prompt templates (PT-001 through PT-005)",
+      "type": "backend",
+      "dependencies": ["TASK-001"],
+      "story": "STORY-012",
+      "epic": "EPIC-005"
+    },
+    "TASK-028": {
+      "title": "Implement prompt service (template rendering)",
+      "type": "backend",
+      "dependencies": ["TASK-027", "TASK-030"],
+      "story": "STORY-012",
+      "epic": "EPIC-005"
+    },
+    "TASK-029": {
+      "title": "Implement GitHub Models API client",
+      "type": "backend",
+      "dependencies": ["TASK-002", "TASK-030"],
+      "story": "STORY-013",
+      "epic": "EPIC-005"
+    },
+    "TASK-030": {
+      "title": "Implement AI generation Pydantic models",
+      "type": "backend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-013",
+      "epic": "EPIC-005"
+    },
+    "TASK-031": {
+      "title": "Implement content persistence layer (AI generation)",
+      "type": "backend",
+      "dependencies": ["TASK-028", "TASK-030", "TASK-015", "TASK-016", "TASK-017", "TASK-014"],
+      "story": "STORY-014",
+      "epic": "EPIC-005"
+    },
+    "TASK-032": {
+      "title": "Implement AI generation router (trigger + status poll)",
+      "type": "backend",
+      "dependencies": ["TASK-028", "TASK-029", "TASK-031", "TASK-010"],
+      "story": "STORY-014",
+      "epic": "EPIC-005"
+    },
+    "TASK-033": {
+      "title": "Implement section regeneration router",
+      "type": "backend",
+      "dependencies": ["TASK-032", "TASK-028", "TASK-031"],
+      "story": "STORY-015",
+      "epic": "EPIC-005"
+    },
+    "TASK-034": {
+      "title": "Write AI generation tests with mocks",
+      "type": "backend",
+      "dependencies": ["TASK-032", "TASK-033"],
+      "story": "STORY-014",
+      "epic": "EPIC-005"
+    },
+    "TASK-035": {
+      "title": "Implement reporting Pydantic models",
+      "type": "backend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-017",
+      "epic": "EPIC-006"
+    },
+    "TASK-036": {
+      "title": "Implement reporting service (dashboard + CSV export)",
+      "type": "backend",
+      "dependencies": ["TASK-005", "TASK-035"],
+      "story": "STORY-017",
+      "epic": "EPIC-006"
+    },
+    "TASK-037": {
+      "title": "Implement reporting router and tests",
+      "type": "backend",
+      "dependencies": ["TASK-036", "TASK-010"],
+      "story": "STORY-017",
+      "epic": "EPIC-006"
+    },
+    "TASK-038": {
+      "title": "Create base HTML template and CSS design system",
+      "type": "frontend",
+      "dependencies": ["TASK-003"],
+      "story": "STORY-019",
+      "epic": "EPIC-007"
+    },
+    "TASK-039": {
+      "title": "Implement frontend page router",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-009"],
+      "story": "STORY-019",
+      "epic": "EPIC-007"
+    },
+    "TASK-040": {
+      "title": "Create authentication login template",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-011"],
+      "story": "STORY-020",
+      "epic": "EPIC-007"
+    },
+    "TASK-041": {
+      "title": "Create learner dashboard and catalog templates",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-018", "TASK-025"],
+      "story": "STORY-021",
+      "epic": "EPIC-007"
+    },
+    "TASK-042": {
+      "title": "Create course detail and lesson viewer templates + progress.js",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-025", "TASK-018"],
+      "story": "STORY-022",
+      "epic": "EPIC-007"
+    },
+    "TASK-043": {
+      "title": "Create quiz template and quiz.js",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-025"],
+      "story": "STORY-023",
+      "epic": "EPIC-007"
+    },
+    "TASK-044": {
+      "title": "Create admin course management templates and course-editor.js",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-018"],
+      "story": "STORY-024",
+      "epic": "EPIC-007"
+    },
+    "TASK-045": {
+      "title": "Create admin AI generation templates and ai-generation.js",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-032", "TASK-034"],
+      "story": "STORY-025",
+      "epic": "EPIC-007"
+    },
+    "TASK-046": {
+      "title": "Create admin reporting dashboard template",
+      "type": "frontend",
+      "dependencies": ["TASK-038", "TASK-039", "TASK-037"],
+      "story": "STORY-026",
+      "epic": "EPIC-007"
+    }
+  },
+  "wave_plan": {
+    "wave_0": {
+      "description": "Project bootstrap — no dependencies",
+      "tasks": ["TASK-001"]
+    },
+    "wave_1": {
+      "description": "Configuration, FastAPI app skeleton, and SQLAlchemy foundation",
+      "tasks": ["TASK-002", "TASK-003", "TASK-004"]
+    },
+    "wave_2": {
+      "description": "All Pydantic models (parallel — no inter-model dependencies)",
+      "tasks": ["TASK-005", "TASK-008", "TASK-013", "TASK-014", "TASK-020", "TASK-030", "TASK-035"]
+    },
+    "wave_3": {
+      "description": "Auth service, Alembic migration, prompt templates (parallel)",
+      "tasks": ["TASK-006", "TASK-009", "TASK-027"]
+    },
+    "wave_4": {
+      "description": "RBAC dependencies, course service, enrollment service, prompt service, GitHub Models client, reporting service",
+      "tasks": ["TASK-010", "TASK-015", "TASK-021", "TASK-028", "TASK-029", "TASK-036"]
+    },
+    "wave_5": {
+      "description": "Auth router, module/lesson service, quiz service, progress recording service, seed script, base frontend template",
+      "tasks": ["TASK-011", "TASK-016", "TASK-017", "TASK-022", "TASK-007", "TASK-038"]
+    },
+    "wave_6": {
+      "description": "Course router, auto-completion, quiz submission service, content persistence, reporting router, frontend router",
+      "tasks": ["TASK-018", "TASK-023", "TASK-024", "TASK-031", "TASK-037", "TASK-039"]
+    },
+    "wave_7": {
+      "description": "Progress router, AI generation router, auth tests, all frontend page templates",
+      "tasks": ["TASK-025", "TASK-032", "TASK-012", "TASK-040", "TASK-041", "TASK-042", "TASK-043", "TASK-044"]
+    },
+    "wave_8": {
+      "description": "Section regeneration, AI tests, progress tests, course tests, AI/reporting frontend templates",
+      "tasks": ["TASK-033", "TASK-034", "TASK-026", "TASK-019", "TASK-045", "TASK-046"]
+    }
+  }
+}
