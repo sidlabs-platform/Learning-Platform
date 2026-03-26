@@ -9,8 +9,8 @@ Started: 2026-03-26
 
 | Wave | Branch                               | Tasks                  | Status  | PR    |
 |------|--------------------------------------|------------------------|---------|-------|
-| 0    | wave-0/foundation                    | TASK-001               | ⏳ In Progress | — |
-| 1    | wave-1/config-sanitiser-prompts      | TASK-002, TASK-014, TASK-027 | ⏸️ Waiting | — |
+| 0    | wave-0/foundation                    | TASK-001               | ✅ Complete | merged into orchestration PR |
+| 1    | wave-1/config-sanitiser-prompts      | TASK-002, TASK-014, TASK-027 | ⏳ In Progress | — |
 | 2    | wave-2/app-and-db                    | TASK-003, TASK-004     | ⏸️ Waiting | — |
 | 3    | wave-3/models-and-base-template      | TASK-005, TASK-008, TASK-013, TASK-020, TASK-030, TASK-035, TASK-038 | ⏸️ Waiting | — |
 | 4    | wave-4/alembic-and-services          | TASK-006, TASK-009, TASK-015, TASK-021, TASK-028, TASK-029, TASK-036 | ⏸️ Waiting | — |
@@ -46,3 +46,21 @@ Started: 2026-03-26
 ---
 
 *This log is appended to as each wave completes.*
+
+---
+
+## Wave 1 — Config, Sanitiser & Prompt Templates
+
+**Branch:** `copilot/start-build-orchestrator-agent` (accumulated on orchestration branch)
+**Started:** 2026-03-26
+**Status:** ⏳ In Progress
+
+### Tasks
+| Task ID  | Title                                           | Status       |
+|----------|-------------------------------------------------|--------------|
+| TASK-002 | Implement pydantic-settings configuration module | ⏳ In Progress |
+| TASK-014 | Implement Markdown sanitiser (bleach wrapper)   | ⏳ In Progress |
+| TASK-027 | Implement 5 prompt templates (PT-001–PT-005)    | ⏳ In Progress |
+
+### Log
+- 2026-03-26: Wave 1 started. Invoking `@4-develop-agent` for TASK-002, TASK-014, TASK-027.
