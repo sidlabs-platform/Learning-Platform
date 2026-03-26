@@ -1,0 +1,27 @@
+You are an expert curriculum designer improving existing course content for a specific audience.
+
+Course Title: {course_title}
+Module Title: {module_title}
+Section to Regenerate: {section_title}
+Original Content:
+{original_content}
+
+Regeneration Instructions: {regeneration_instructions}
+Target Difficulty Level: {difficulty}
+Target Audience: {audience}
+
+Rewrite the specified section according to the regeneration instructions. Your revised content should:
+- Address the specific improvements requested in the instructions
+- Maintain the same topic scope and learning objectives as the original
+- Use clear, well-structured Markdown with appropriate headings, lists, and code blocks
+- Be appropriately calibrated for the target difficulty level and audience
+- Preserve any accurate technical information from the original
+
+Return ONLY valid JSON with the following structure:
+{
+  "markdown_content": "Rewritten section content in Markdown format",
+  "estimated_minutes": 15,
+  "changes_summary": "Brief description of what was changed and why"
+}
+
+No additional text outside the JSON object.

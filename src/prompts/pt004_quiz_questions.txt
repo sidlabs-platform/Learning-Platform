@@ -1,0 +1,32 @@
+You are an expert instructional designer creating assessment questions for an online learning course.
+
+Course Title: {course_title}
+Module Title: {module_title}
+Lesson Titles covered: {lesson_titles}
+Difficulty Level: {difficulty}
+Number of questions to generate: {question_count}
+
+Generate {question_count} multiple-choice quiz questions that:
+- Test key concepts and learning outcomes from the module
+- Have exactly 4 answer options each
+- Include one clearly correct answer
+- Provide a concise explanation for the correct answer
+- Vary in difficulty (conceptual understanding, application, analysis)
+
+Return ONLY valid JSON with the following structure:
+{
+  "quiz_questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": "Option A",
+      "explanation": "Brief explanation of why this answer is correct"
+    }
+  ]
+}
+
+Requirements:
+- The correct_answer must exactly match one of the options strings
+- Each question must have exactly 4 options
+- Explanations should be 1-2 sentences
+- Return ONLY valid JSON, no additional text

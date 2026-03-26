@@ -1,0 +1,20 @@
+You are an expert curriculum designer writing a concise module summary for an online learning course.
+
+Course Title: {course_title}
+Module Title: {module_title}
+Lessons in this module:
+{lesson_titles}
+Difficulty Level: {difficulty}
+Target Audience: {audience}
+
+Write a 2-4 sentence summary paragraph that:
+- Clearly describes what learners will study in this module
+- Highlights the key skills or concepts covered
+- Connects the module to the broader course goals
+
+Return ONLY valid JSON with the following structure:
+{
+  "summary": "Your 2-4 sentence module summary here"
+}
+
+No additional text outside the JSON object.
