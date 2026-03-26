@@ -135,6 +135,8 @@ class Course(Base):
     estimated_duration: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, comment="Total estimated duration in minutes"
     )
+    # None is intentional: courses may be created without tags.
+    # JSONList preserves None as SQL NULL; an empty list serialises as "[]".
     tags: Mapped[list[str] | None] = mapped_column(JSONList, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
