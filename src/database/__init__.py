@@ -15,6 +15,10 @@ from src.database.base import Base, JSONList
 from src.database.engine import AsyncSessionLocal, engine
 from src.database.session import get_db
 
+# Import all ORM models so that Base.metadata discovers them before create_all().
+# This import must come AFTER Base is defined to avoid circular-import issues.
+import src.models  # noqa: F401, E402
+
 
 async def init_db() -> None:
     """
