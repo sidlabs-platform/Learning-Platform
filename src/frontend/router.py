@@ -18,17 +18,19 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import get_current_user, require_admin
 from src.course_management.service import (
     get_course,
     get_course_with_modules,
     get_lesson,
     get_module,
+    list_courses,
     list_lessons,
     list_published_courses,
 )
 from src.database import get_db
-from src.models import QuizQuestion
+from src.models import QuizQuestion, User
+from src.reporting.service import get_admin_dashboard
 from src.progress.enrollment_service import get_enrollment, get_user_enrollments
 from src.progress.progress_service import (
     get_course_progress_summary,
@@ -335,4 +337,113 @@ async def quiz_page(
         "course": course,
         "module": module,
         "questions": questions_data,
+    })
+
+
+# ===========================================================================
+# Admin Pages
+# ===========================================================================
+
+
+@router.get("/admin", include_in_schema=False)
+async def admin_dashboard_page(
+    request: Request,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the admin dashboard with platform-wide stats and reports."""
+    dashboard = await get_admin_dashboard(db)
+    return templates.TemplateResponse("admin/dashboard.html", {
+        "request": request,
+        "user": user,
+        "dashboard": dashboard,
+    })
+
+
+@router.get("/admin/courses", include_in_schema=False)
+async def admin_course_list_page(
+    request: Request,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the admin course management list with all courses."""
+    courses = await list_courses(db)
+    return templates.TemplateResponse("admin/course_list.html", {
+        "request": request,
+        "user": user,
+        "courses": courses,
+    })
+
+
+@router.get("/admin/courses/new", include_in_schema=False)
+async def admin_course_create_page(
+    request: Request,
+    user: User = Depends(require_admin),
+):
+    """Render the empty course editor form for creating a new course."""
+    return templates.TemplateResponse("admin/course_editor.html", {
+        "request": request,
+        "user": user,
+        "course": None,
+        "modules": [],
+    })
+
+
+@router.get("/admin/courses/{course_id}/edit", include_in_schema=False)
+async def admin_course_edit_page(
+    course_id: str,
+    request: Request,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the pre-populated course editor form for editing."""
+    course = await get_course_with_modules(course_id, db)
+    if course is None:
+        return RedirectResponse(
+            url="/admin/courses?error=Course+not+found", status_code=302,
+        )
+    modules = sorted(course.modules, key=lambda m: m.sort_order)
+    for module in modules:
+        module.lessons = sorted(module.lessons, key=lambda l: l.sort_order)
+    return templates.TemplateResponse("admin/course_editor.html", {
+        "request": request,
+        "user": user,
+        "course": course,
+        "modules": modules,
+    })
+
+
+@router.get("/admin/lessons/{lesson_id}/edit", include_in_schema=False)
+async def admin_lesson_edit_page(
+    lesson_id: str,
+    request: Request,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Render the lesson markdown editor."""
+    lesson = await get_lesson(lesson_id, db)
+    if lesson is None:
+        return RedirectResponse(
+            url="/admin/courses?error=Lesson+not+found", status_code=302,
+        )
+    module = await get_module(lesson.module_id, db)
+    course = await get_course(module.course_id, db) if module else None
+    return templates.TemplateResponse("admin/lesson_editor.html", {
+        "request": request,
+        "user": user,
+        "lesson": lesson,
+        "module": module,
+        "course": course,
+    })
+
+
+@router.get("/admin/ai/generate", include_in_schema=False)
+async def admin_ai_generate_page(
+    request: Request,
+    user: User = Depends(require_admin),
+):
+    """Render the AI content generation page."""
+    return templates.TemplateResponse("admin/ai_generate.html", {
+        "request": request,
+        "user": user,
     })

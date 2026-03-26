@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}AI Content Generation — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: var(--space-8) var(--space-4);">
+
+    <div class="ai-generate-layout">
+
+        <!-- Header -->
+        <div class="ai-generate-header">
+            <div class="ai-generate-header__icon" aria-hidden="true">✨</div>
+            <h1 class="ai-generate-header__title">AI Course Generator</h1>
+            <p class="ai-generate-header__sub">
+                Describe your course topic and let AI create a structured course outline with modules and lessons.
+            </p>
+        </div>
+
+        <!-- Generation form -->
+        <div class="ai-form-card" id="generation-form-card">
+            <h2 class="ai-form-card__title">
+                📋 Course Parameters
+            </h2>
+            <form id="ai-generate-form" novalidate>
+                <div class="form-group">
+                    <label for="topic" class="form-label form-label-required">Topic</label>
+                    <input type="text"
+                           id="topic"
+                           name="topic"
+                           class="form-input"
+                           placeholder="e.g. Introduction to Machine Learning with Python"
+                           required
+                           maxlength="500"
+                           autofocus>
+                    <span class="form-hint">The main subject of the course</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="target_audience" class="form-label form-label-required">Target Audience</label>
+                    <input type="text"
+                           id="target_audience"
+                           name="target_audience"
+                           class="form-input"
+                           placeholder="e.g. Junior developers with basic Python knowledge"
+                           required
+                           maxlength="300">
+                    <span class="form-hint">Who is this course designed for?</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="learning_objectives" class="form-label form-label-required">Learning Objectives</label>
+                    <textarea id="learning_objectives"
+                              name="learning_objectives"
+                              class="form-textarea"
+                              rows="4"
+                              placeholder="Understand supervised vs unsupervised learning
+Implement a basic linear regression model
+Evaluate model performance with metrics
+Deploy a simple ML model as an API"
+                              required></textarea>
+                    <span class="form-hint">One learning objective per line</span>
+                    <div class="char-counter" id="objectives-counter">0 objectives</div>
+                </div>
+
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label for="difficulty" class="form-label form-label-required">Difficulty</label>
+                        <select id="difficulty" name="difficulty" class="form-select" required>
+                            <option value="">Select…</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate" selected>Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="desired_module_count" class="form-label">Number of Modules</label>
+                        <input type="number"
+                               id="desired_module_count"
+                               name="desired_module_count"
+                               class="form-input"
+                               value="3"
+                               min="1"
+                               max="20">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="preferred_tone" class="form-label">Tone</label>
+                        <select id="preferred_tone" name="preferred_tone" class="form-select">
+                            <option value="professional" selected>Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="academic">Academic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top:var(--space-4);">
+                    <button type="submit" class="btn btn-primary btn-lg" id="generate-btn">
+                        ✨ Generate Course
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Status / result panel -->
+        <div id="status-panel" style="display:none;">
+            <div class="ai-form-card">
+                <h2 class="ai-form-card__title">
+                    🔄 Generation Status
+                </h2>
+                <div id="status-content">
+                    <div class="ai-result is-loading">
+                        <div class="spinner" aria-hidden="true" style="width:2rem; height:2rem; border:3px solid var(--color-gray-200); border-top-color:var(--color-primary); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+                        <p id="status-text">Starting generation…</p>
+                        <div style="display:flex; align-items:center; gap:var(--space-2);">
+                            <span class="status-dot pending" id="status-dot"></span>
+                            <span id="status-badge" class="badge badge-warning">Pending</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result on completion -->
+            <div id="result-panel" style="display:none;" class="ai-form-card">
+                <h2 class="ai-form-card__title" id="result-title">
+                    ✅ Generation Complete
+                </h2>
+                <div id="result-content"></div>
+                <div style="display:flex; gap:var(--space-3); margin-top:var(--space-5);" id="result-actions">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentRequestId = null;
+let pollTimer = null;
+
+/* Count objectives as user types */
+document.getElementById('learning_objectives').addEventListener('input', function() {
+    var lines = this.value.split('\n').filter(function(l) { return l.trim() !== ''; });
+    document.getElementById('objectives-counter').textContent = lines.length + ' objective' + (lines.length !== 1 ? 's' : '');
+});
+
+/* ---- Submit generation ---- */
+document.getElementById('ai-generate-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearFormErrors(this);
+
+    var topic = document.getElementById('topic').value.trim();
+    var targetAudience = document.getElementById('target_audience').value.trim();
+    var objectivesRaw = document.getElementById('learning_objectives').value.trim();
+    var difficulty = document.getElementById('difficulty').value;
+    var moduleCount = parseInt(document.getElementById('desired_module_count').value) || 3;
+    var tone = document.getElementById('preferred_tone').value;
+
+    /* Validate */
+    var valid = true;
+    if (!topic) { showFieldError(document.getElementById('topic'), 'Topic is required.'); valid = false; }
+    if (!targetAudience) { showFieldError(document.getElementById('target_audience'), 'Target audience is required.'); valid = false; }
+    if (!objectivesRaw) { showFieldError(document.getElementById('learning_objectives'), 'At least one learning objective is required.'); valid = false; }
+    if (!difficulty) { showFieldError(document.getElementById('difficulty'), 'Difficulty is required.'); valid = false; }
+    if (!valid) return;
+
+    var objectives = objectivesRaw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
+
+    var btn = document.getElementById('generate-btn');
+    setBtnLoading(btn, 'Starting generation…');
+
+    try {
+        var response = await apiFetch('/api/v1/ai/generate', {
+            method: 'POST',
+            body: JSON.stringify({
+                topic: topic,
+                target_audience: targetAudience,
+                learning_objectives: objectives,
+                difficulty: difficulty,
+                desired_module_count: moduleCount,
+                preferred_tone: tone,
+            }),
+        });
+
+        currentRequestId = response.request_id || response.id;
+        showStatusPanel();
+        startPolling();
+    } catch (err) {
+        showToast(err.message || 'Failed to start generation.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+});
+
+/** Show the status panel and hide the form card visually. */
+function showStatusPanel() {
+    document.getElementById('status-panel').style.display = 'block';
+    document.getElementById('generation-form-card').style.opacity = '0.5';
+    document.getElementById('generation-form-card').style.pointerEvents = 'none';
+    window.scrollTo({ top: document.getElementById('status-panel').offsetTop - 100, behavior: 'smooth' });
+}
+
+/** Start polling for generation status. */
+function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(checkStatus, 3000);
+    /* Immediate first check */
+    checkStatus();
+}
+
+/** Check the generation status. */
+async function checkStatus() {
+    if (!currentRequestId) return;
+
+    try {
+        var response = await apiFetch('/api/v1/ai/generate/' + currentRequestId);
+        var status = response.status;
+
+        updateStatusDisplay(status, response);
+
+        if (status === 'completed') {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            showCompletionResult(response);
+        } else if (status === 'failed') {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            showFailureResult(response);
+        }
+    } catch (err) {
+        /* Don't stop polling on transient errors */
+        console.error('Status poll error:', err);
+    }
+}
+
+/**
+ * Update the status display.
+ * @param {string} status
+ * @param {object} response
+ */
+function updateStatusDisplay(status, response) {
+    var dot = document.getElementById('status-dot');
+    var badge = document.getElementById('status-badge');
+    var text = document.getElementById('status-text');
+
+    /* Reset dot classes */
+    dot.className = 'status-dot ' + status;
+
+    var labels = {
+        pending: 'Pending',
+        in_progress: 'In Progress',
+        processing: 'In Progress',
+        completed: 'Completed',
+        failed: 'Failed',
+    };
+
+    var badgeClasses = {
+        pending: 'badge badge-warning',
+        in_progress: 'badge badge-primary',
+        processing: 'badge badge-primary',
+        completed: 'badge badge-success',
+        failed: 'badge badge-danger',
+    };
+
+    var statusMessages = {
+        pending: 'Your course is queued for generation…',
+        in_progress: 'AI is generating your course content…',
+        processing: 'AI is generating your course content…',
+        completed: 'Course generation completed!',
+        failed: 'Generation encountered an error.',
+    };
+
+    badge.className = badgeClasses[status] || 'badge badge-neutral';
+    badge.textContent = labels[status] || status;
+    text.textContent = statusMessages[status] || 'Processing…';
+
+    /* Update dot for CSS animation */
+    if (status === 'in_progress' || status === 'processing') {
+        dot.classList.add('processing');
+    }
+}
+
+/**
+ * Display the completion result.
+ * @param {object} response
+ */
+function showCompletionResult(response) {
+    var resultPanel = document.getElementById('result-panel');
+    var resultContent = document.getElementById('result-content');
+    var resultActions = document.getElementById('result-actions');
+
+    document.getElementById('result-title').innerHTML = '✅ Generation Complete';
+
+    var html = '<div class="alert alert-success" style="margin-bottom:var(--space-4);">';
+    html += '<span class="alert-icon" aria-hidden="true">✓</span>';
+    html += '<span>Your course has been successfully generated! You can now review and edit it.</span>';
+    html += '</div>';
+
+    if (response.course_id) {
+        html += '<p style="color:var(--color-text-secondary); margin-bottom:var(--space-2);">Course ID: <code>' + escapeHtml(response.course_id) + '</code></p>';
+    }
+
+    if (response.result) {
+        html += '<details style="margin-top:var(--space-4);">';
+        html += '<summary style="cursor:pointer; font-weight:var(--font-weight-medium); color:var(--color-primary);">View generation details</summary>';
+        html += '<div class="ai-result__content" style="margin-top:var(--space-3);">' + escapeHtml(JSON.stringify(response.result, null, 2)) + '</div>';
+        html += '</details>';
+    }
+
+    resultContent.innerHTML = html;
+
+    var actionsHtml = '';
+    if (response.course_id) {
+        actionsHtml += '<a href="/admin/courses/' + escapeHtml(response.course_id) + '/edit" class="btn btn-primary">✏️ Edit Generated Course</a>';
+    }
+    actionsHtml += '<button class="btn btn-secondary" onclick="resetForm()">🔄 Generate Another</button>';
+    actionsHtml += '<a href="/admin/courses" class="btn btn-ghost">View All Courses</a>';
+    resultActions.innerHTML = actionsHtml;
+
+    resultPanel.style.display = 'block';
+
+    /* Re-enable the form */
+    document.getElementById('generation-form-card').style.opacity = '1';
+    document.getElementById('generation-form-card').style.pointerEvents = 'auto';
+}
+
+/**
+ * Display a failure result with retry option.
+ * @param {object} response
+ */
+function showFailureResult(response) {
+    var resultPanel = document.getElementById('result-panel');
+    var resultContent = document.getElementById('result-content');
+    var resultActions = document.getElementById('result-actions');
+
+    document.getElementById('result-title').innerHTML = '❌ Generation Failed';
+
+    var errorMsg = (response.error) ? escapeHtml(response.error) : 'An unexpected error occurred during generation.';
+
+    var html = '<div class="alert alert-danger">';
+    html += '<span class="alert-icon" aria-hidden="true">✕</span>';
+    html += '<span>' + errorMsg + '</span>';
+    html += '</div>';
+
+    resultContent.innerHTML = html;
+
+    var actionsHtml = '<button class="btn btn-primary" onclick="retryGeneration()">🔄 Retry</button>';
+    actionsHtml += '<button class="btn btn-secondary" onclick="resetForm()">Start Over</button>';
+    resultActions.innerHTML = actionsHtml;
+
+    resultPanel.style.display = 'block';
+
+    /* Re-enable the form */
+    document.getElementById('generation-form-card').style.opacity = '1';
+    document.getElementById('generation-form-card').style.pointerEvents = 'auto';
+}
+
+/** Reset the form and hide status panels. */
+function resetForm() {
+    currentRequestId = null;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    document.getElementById('status-panel').style.display = 'none';
+    document.getElementById('result-panel').style.display = 'none';
+    document.getElementById('generation-form-card').style.opacity = '1';
+    document.getElementById('generation-form-card').style.pointerEvents = 'auto';
+
+    /* Reset status display */
+    document.getElementById('status-dot').className = 'status-dot pending';
+    document.getElementById('status-badge').className = 'badge badge-warning';
+    document.getElementById('status-badge').textContent = 'Pending';
+    document.getElementById('status-text').textContent = 'Starting generation…';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/** Retry generation with the same form data. */
+function retryGeneration() {
+    document.getElementById('result-panel').style.display = 'none';
+    document.getElementById('ai-generate-form').dispatchEvent(new Event('submit', { cancelable: true }));
+}
+
+/* Clean up polling on page unload */
+window.addEventListener('beforeunload', function() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+});
+</script>
+{% endblock %}
