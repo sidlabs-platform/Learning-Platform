@@ -95,6 +95,17 @@ class ModuleCreate(BaseModel):
     sort_order: int
 
 
+class ModuleUpdate(BaseModel):
+    """Request body for ``PATCH /api/v1/courses/{course_id}/modules/{module_id}``.
+
+    All fields are optional to support partial updates.
+    """
+
+    title: str | None = None
+    summary: str | None = None
+    sort_order: int | None = None
+
+
 class ModuleRead(BaseModel):
     """Module representation returned in API responses."""
 
@@ -119,6 +130,18 @@ class LessonCreate(BaseModel):
     markdown_content: str
     estimated_minutes: int
     sort_order: int
+
+
+class LessonUpdate(BaseModel):
+    """Request body for ``PATCH`` on a lesson resource.
+
+    All fields are optional to support partial updates.
+    """
+
+    title: str | None = None
+    markdown_content: str | None = None
+    estimated_minutes: int | None = None
+    sort_order: int | None = None
 
 
 class LessonRead(BaseModel):
@@ -184,8 +207,10 @@ __all__ = [
     "CourseUpdate",
     "CourseRead",
     "ModuleCreate",
+    "ModuleUpdate",
     "ModuleRead",
     "LessonCreate",
+    "LessonUpdate",
     "LessonRead",
     "QuizQuestionCreate",
     "QuizQuestionRead",
