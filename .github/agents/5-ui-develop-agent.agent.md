@@ -36,7 +36,10 @@ Before writing any code, read and understand these inputs:
 ## Wave Execution Context
 
 - You will be invoked **multiple times** — once per wave. Each invocation gives you a specific set of tasks.
-- **Do not implement tasks from other waves.** Trust that prerequisite tasks from earlier waves are already done.
+- **You are working on a wave branch** (e.g., `wave-2/routes-and-ui`), not directly on `main`. The orchestrator creates this branch before invoking you. All your changes should be made on the current branch.
+- **Do not switch branches.** Stay on the branch the orchestrator placed you on.
+- **Do not create commits or push** — the orchestrator handles git operations (commit, push, PR creation) after you finish.
+- **Do not implement tasks from other waves.** Trust that prerequisite tasks from earlier waves are already merged into `main` (and into your wave branch).
 - **Do not refactor or rewrite code from previous waves** unless your task explicitly requires it.
 - If you find that a prerequisite backend endpoint or frontend component is missing (expected from a prior wave), **stop and report the issue** rather than implementing a workaround.
 - The **base layout template** (`base.html` or equivalent) is typically created in an early wave. Extend it; do not replace it.
