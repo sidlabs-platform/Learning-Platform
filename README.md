@@ -99,11 +99,7 @@ Learning-Platform/
 │   ├── schemas/                # Pydantic v2 request/response schemas
 │   ├── routers/                # FastAPI route handlers (thin controllers)
 │   ├── services/               # Business logic services
-│   │   ├── auth_service.py
-│   │   ├── course_service.py
-│   │   ├── ai_generation_service.py
-│   │   ├── progress_service.py
-│   │   └── reporting_service.py
+│   │   │                       # (auth, courses, AI generation, progress, reporting)
 │   ├── dependencies/           # FastAPI dependency injection helpers
 │   ├── utils/                  # Shared utilities and helpers
 │   ├── prompts/                # AI prompt templates
