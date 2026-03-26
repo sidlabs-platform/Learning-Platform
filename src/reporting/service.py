@@ -11,7 +11,6 @@ are required.
 import csv
 import io
 import logging
-from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
