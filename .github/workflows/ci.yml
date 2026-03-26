@@ -37,15 +37,22 @@ jobs:
           echo "✅ All files pass syntax check"
 
       - name: Import validation
+        env:
+          GITHUB_MODELS_API_KEY: test-placeholder
+          GITHUB_MODELS_ENDPOINT: https://models.inference.ai.azure.com
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
         run: |
           echo "Validating top-level package imports..."
-          cd src && python -c "
+          python -c "
           import importlib, pathlib, sys
           failures = []
-          for f in pathlib.Path('.').rglob('*.py'):
+          for f in pathlib.Path('src').rglob('*.py'):
               if f.name.startswith('_'):
                   continue
               module = str(f.with_suffix('')).replace('/', '.')
+              # Skip migration scripts (they need Alembic runtime context)
+              if 'migrations.versions' in module or 'migrations.env' in module:
+                  continue
               try:
                   importlib.import_module(module)
               except Exception as e:
@@ -77,6 +84,10 @@ jobs:
           pip install pytest pytest-asyncio httpx
 
       - name: Run tests
+        env:
+          GITHUB_MODELS_API_KEY: test-placeholder
+          GITHUB_MODELS_ENDPOINT: https://models.inference.ai.azure.com
+          SECRET_KEY: ci-test-secret-key-minimum-32-chars!!
         run: |
           if [ -d tests ] && find tests/ -name "test_*.py" | grep -q .; then
             python -m pytest tests/ -v --tb=short --strict-markers
