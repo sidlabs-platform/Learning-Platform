@@ -7,8 +7,10 @@ A minimum viable learning platform where **Learners** enroll in and complete cou
 and progress is tracked at lesson/module/course level.
 
 The MVP ships with three starter courses: **GitHub Foundations**, **GitHub Advanced Security**,
-and **GitHub Actions**. The SDLC is driven by 7 custom Copilot agents that chain together
-to produce requirements → design → backlog → implementation → UI → tests → security review.
+and **GitHub Actions**. The SDLC is driven by custom Copilot agents that chain together
+to produce requirements → design → backlog → **orchestrated wave execution** → UI → tests → security review.
+
+The pipeline is: `@1-requirement-agent` → `@2-plan-and-design-agent` → `@3-epic-and-tasks-agent` → `@3.5-build-orchestrator-agent` → `@4-develop-agent` / `@5-ui-develop-agent` (wave by wave) → `@6-automation-test-agent` → `@7-security-agent`.
 
 ### Requirements Source
 

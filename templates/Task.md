@@ -50,6 +50,16 @@
 - **Table/Model:** `[Fill in]`
 - **Changes:** [Fill in — new fields, indexes, migrations]
 
+## Dependencies
+
+> List tasks that **must be completed before** this task can begin. If none, write "None".
+
+| Prerequisite Task | Reason                                         |
+|-------------------|-------------------------------------------------|
+| TASK-[Fill in]    | [Fill in — e.g., Needs database models defined] |
+
+**Wave:** [Fill in — wave number assigned by orchestrator, e.g., 0, 1, 2]
+
 ## Acceptance Criteria
 
 - [ ] [Fill in — specific, testable criterion]
