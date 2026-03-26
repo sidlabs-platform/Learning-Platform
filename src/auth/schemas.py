@@ -77,7 +77,7 @@ class UserRead(BaseModel):
 class UserLogin(BaseModel):
     """Request body for ``POST /api/v1/auth/login``."""
 
-    email: EmailStr
+    email: str
     password: str
 
 
