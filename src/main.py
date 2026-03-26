@@ -111,12 +111,12 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 # startup during incremental wave development.
 # ---------------------------------------------------------------------------
 
-# TODO: include auth router (TASK-005+)
-# try:
-#     from src.routers.auth import router as auth_router
-#     app.include_router(auth_router, prefix="/api/v1")
-# except ImportError as exc:
-#     logger.warning("Auth router not yet available: %s", exc)
+try:
+    from src.routers.auth import router as auth_router
+    app.include_router(auth_router)
+    logger.info("Auth router registered.")
+except ImportError as exc:
+    logger.warning("Auth router not yet available: %s", exc)
 
 # TODO: include courses router
 # TODO: include AI generation router
