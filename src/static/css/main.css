@@ -1,0 +1,6 @@
+/* main.css — Convenience file that imports the full design system */
+@import url("base.css");
+@import url("layout.css");
+@import url("components.css");
+@import url("learner.css");
+@import url("admin.css");

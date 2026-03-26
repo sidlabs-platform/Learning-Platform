@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learning Platform — AI-assisted internal learning">
+    <title>{% block title %}Learning Platform{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    {% block extra_css %}{% endblock %}
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <a href="/" class="nav-brand" aria-label="Learning Platform home">
+            <span class="brand-icon" aria-hidden="true">🎓</span>
+            Learning Platform
+        </a>
+
+        {% if current_user %}
+        <div class="nav-links" id="nav-links" role="menubar">
+            {% if current_user.role == "learner" %}
+                <a href="/dashboard" class="{% if request.url.path == '/dashboard' %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.887 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+                    Dashboard
+                </a>
+                <a href="/catalog" class="{% if request.url.path == '/catalog' %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
+                    Courses
+                </a>
+            {% else %}
+                <a href="/admin" class="{% if request.url.path == '/admin' %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.887 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+                    Dashboard
+                </a>
+                <a href="/admin/courses" class="{% if request.url.path.startswith('/admin/courses') %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z"/></svg>
+                    Courses
+                </a>
+                <a href="/admin/ai/generate" class="{% if request.url.path.startswith('/admin/ai') %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+                    AI Generate
+                </a>
+                <a href="/admin/reports" class="{% if request.url.path.startswith('/admin/reports') %}active{% endif %}" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"/></svg>
+                    Reports
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="nav-right" id="nav-right">
+            <div class="nav-user" title="{{ current_user.name }} ({{ current_user.role }})">
+                <div class="user-avatar" aria-hidden="true">{{ current_user.name[0] | upper }}</div>
+                <div>
+                    <div class="user-name">{{ current_user.name }}</div>
+                    <div class="user-role">{{ current_user.role }}</div>
+                </div>
+            </div>
+            <a href="/logout" class="btn btn-secondary btn-sm" role="menuitem">Logout</a>
+        </div>
+        {% endif %}
+
+        <!-- Mobile hamburger (only when authenticated) -->
+        {% if current_user %}
+        <button class="nav-toggle" id="nav-toggle" aria-controls="nav-links nav-right"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="bar" aria-hidden="true"></span>
+            <span class="bar" aria-hidden="true"></span>
+            <span class="bar" aria-hidden="true"></span>
+        </button>
+        {% endif %}
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content" role="main">
+        <!-- Flash Messages -->
+        {% if flash_messages %}
+        <div class="flash-messages container" role="alert" aria-live="polite">
+            {% for message in flash_messages %}
+            <div class="alert alert-{{ message.type }}" role="alert">
+                <span class="alert-content">{{ message.text }}</span>
+                <button class="alert-close" aria-label="Dismiss message" onclick="this.closest('.alert').remove()">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <p>🎓 Learning Platform &copy; {{ now().year if now is defined else 2025 }} &mdash;
+           AI-assisted internal learning</p>
+    </footer>
+
+    <script src="/static/js/utils.js"></script>
+    {% block scripts %}{% endblock %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

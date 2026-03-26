@@ -1,0 +1,269 @@
+/* =============================================================================
+   base.css — CSS custom properties, reset, and typography
+   Learning Platform Design System
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Custom Properties (Design Tokens)
+   --------------------------------------------------------------------------- */
+
+:root {
+    /* Brand Colors */
+    --primary:          #0969da;
+    --primary-dark:     #0550ae;
+    --primary-light:    #dbeafe;
+
+    /* Semantic Colors */
+    --secondary:        #656d76;
+    --success:          #1a7f37;
+    --success-light:    #dcfce7;
+    --danger:           #cf222e;
+    --danger-light:     #fee2e2;
+    --warning:          #9a6700;
+    --warning-light:    #fef9c3;
+    --info:             #0969da;
+    --info-light:       #dbeafe;
+
+    /* Neutral Palette */
+    --background:       #f6f8fa;
+    --surface:          #ffffff;
+    --surface-alt:      #f6f8fa;
+    --border:           #d0d7de;
+    --border-subtle:    #e6edf3;
+
+    /* Text */
+    --text-primary:     #1f2328;
+    --text-secondary:   #656d76;
+    --text-muted:       #848d97;
+    --text-inverse:     #ffffff;
+    --text-link:        #0969da;
+    --text-link-hover:  #0550ae;
+
+    /* Status Badge Colors */
+    --badge-draft-bg:       #dbeafe;
+    --badge-draft-text:     #1d4ed8;
+    --badge-published-bg:   #dcfce7;
+    --badge-published-text: #15803d;
+    --badge-archived-bg:    #f3f4f6;
+    --badge-archived-text:  #6b7280;
+
+    /* Difficulty Badge Colors */
+    --badge-beginner-bg:        #dcfce7;
+    --badge-beginner-text:      #15803d;
+    --badge-intermediate-bg:    #fef9c3;
+    --badge-intermediate-text:  #854d0e;
+    --badge-advanced-bg:        #fee2e2;
+    --badge-advanced-text:      #b91c1c;
+
+    /* Typography */
+    --font-family:      -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans",
+                        Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    --font-mono:        ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                        "Liberation Mono", monospace;
+    --font-size-xs:     0.75rem;    /* 12px */
+    --font-size-sm:     0.875rem;   /* 14px */
+    --font-size-base:   1rem;       /* 16px */
+    --font-size-lg:     1.125rem;   /* 18px */
+    --font-size-xl:     1.25rem;    /* 20px */
+    --font-size-2xl:    1.5rem;     /* 24px */
+    --font-size-3xl:    1.875rem;   /* 30px */
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --line-height-tight: 1.25;
+    --line-height-base:  1.5;
+    --line-height-relaxed: 1.625;
+
+    /* Spacing Scale */
+    --space-1:  0.25rem;   /* 4px */
+    --space-2:  0.5rem;    /* 8px */
+    --space-3:  0.75rem;   /* 12px */
+    --space-4:  1rem;      /* 16px */
+    --space-5:  1.25rem;   /* 20px */
+    --space-6:  1.5rem;    /* 24px */
+    --space-8:  2rem;      /* 32px */
+    --space-10: 2.5rem;    /* 40px */
+    --space-12: 3rem;      /* 48px */
+    --space-16: 4rem;      /* 64px */
+
+    /* Borders */
+    --radius-sm:    4px;
+    --radius:       6px;
+    --radius-md:    8px;
+    --radius-lg:    12px;
+    --radius-full:  9999px;
+    --border-width: 1px;
+
+    /* Shadows */
+    --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.07);
+    --shadow:       0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md:    0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-lg:    0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+
+    /* Transitions */
+    --transition-fast:  100ms ease;
+    --transition-base:  200ms ease;
+    --transition-slow:  300ms ease;
+
+    /* Layout */
+    --navbar-height:    56px;
+    --sidebar-width:    240px;
+    --content-max-w:    1200px;
+    --content-padding:  var(--space-6);
+}
+
+/* ---------------------------------------------------------------------------
+   CSS Reset & Box Model
+   --------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-base);
+    color: var(--text-primary);
+    background-color: var(--background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------------------------------------------------------------------------
+   Typography
+   --------------------------------------------------------------------------- */
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+}
+
+h1 { font-size: var(--font-size-3xl); }
+h2 { font-size: var(--font-size-2xl); }
+h3 { font-size: var(--font-size-xl); }
+h4 { font-size: var(--font-size-lg); }
+h5 { font-size: var(--font-size-base); }
+h6 { font-size: var(--font-size-sm); }
+
+p {
+    color: var(--text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+a {
+    color: var(--text-link);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--text-link-hover);
+    text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+strong, b {
+    font-weight: var(--font-weight-semibold);
+}
+
+em, i {
+    font-style: italic;
+}
+
+small {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+code, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.1em 0.3em;
+}
+
+pre {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    overflow-x: auto;
+    line-height: var(--line-height-relaxed);
+}
+
+pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+}
+
+blockquote {
+    border-left: 4px solid var(--border);
+    padding-left: var(--space-4);
+    color: var(--text-secondary);
+    margin: var(--space-4) 0;
+}
+
+ul, ol {
+    padding-left: var(--space-6);
+}
+
+li {
+    margin-bottom: var(--space-1);
+    color: var(--text-secondary);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: var(--space-6) 0;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   Focus Management (Accessibility)
+   --------------------------------------------------------------------------- */
+
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Remove focus-visible for mouse users via JS class */
+.no-focus-visible :focus-visible {
+    outline: none;
+}

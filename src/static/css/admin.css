@@ -1,0 +1,9 @@
+/* admin.css — Admin course editor, AI generation, reporting styles */
+.admin-layout { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-6); min-height: calc(100vh - var(--navbar-height)); }
+.admin-sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: var(--space-4); }
+.admin-sidebar a { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--radius); color: var(--text-secondary); font-size: var(--font-size-sm); text-decoration: none; margin-bottom: var(--space-1); }
+.admin-sidebar a:hover { background: var(--surface-alt); color: var(--text-primary); }
+.admin-sidebar a.active { background: var(--primary-light); color: var(--primary); font-weight: var(--font-weight-medium); }
+.ai-generate-form { max-width: 640px; }
+.report-chart { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); }
+@media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } .admin-sidebar { border-right: none; border-bottom: 1px solid var(--border); } }
