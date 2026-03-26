@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 12rem);
+        padding: var(--space-6) var(--space-4);
+    }
+    .auth-card {
+        width: 100%;
+        max-width: 420px;
+    }
+    .auth-card__header {
+        text-align: center;
+        margin-bottom: var(--space-6);
+    }
+    .auth-card__icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--space-3);
+    }
+    .auth-card__title {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-2);
+    }
+    .auth-card__subtitle {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
+    .auth-card__footer {
+        text-align: center;
+        margin-top: var(--space-5);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+    }
+    .auth-card__footer a {
+        color: var(--color-primary);
+        font-weight: var(--font-weight-medium);
+        text-decoration: none;
+    }
+    .auth-card__footer a:hover {
+        text-decoration: underline;
+    }
+    .auth-error {
+        background: var(--color-danger-light);
+        color: var(--color-danger-dark);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-base);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+    .auth-error.visible {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card card">
+        <div class="card__body">
+            <div class="auth-card__header">
+                <div class="auth-card__icon" aria-hidden="true">🎓</div>
+                <h1 class="auth-card__title">Welcome back</h1>
+                <p class="auth-card__subtitle">Sign in to continue learning</p>
+            </div>
+
+            <div id="login-error" class="auth-error" role="alert" aria-live="assertive"></div>
+
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="email" class="form-label form-label-required">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                        aria-required="true"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label form-label-required">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required
+                        aria-required="true"
+                    >
+                </div>
+
+                <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-card__footer">
+                Don't have an account?
+                <a href="/auth/register">Create one now</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+onDOMReady(function () {
+    var form = document.getElementById('login-form');
+    var errorBox = document.getElementById('login-error');
+    var btn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearFormErrors(form);
+        errorBox.classList.remove('visible');
+        errorBox.textContent = '';
+
+        var email = form.email.value.trim();
+        var password = form.password.value;
+
+        /* Client-side validation */
+        var valid = true;
+        if (!email) {
+            showFieldError(form.email, 'Email is required');
+            valid = false;
+        }
+        if (!password) {
+            showFieldError(form.password, 'Password is required');
+            valid = false;
+        }
+        if (!valid) return;
+
+        setBtnLoading(btn, 'Signing in…');
+
+        try {
+            await apiFetch('/api/v1/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email: email, password: password }),
+            });
+            /* Cookie is set by the server — redirect to dashboard */
+            window.location.href = '/dashboard';
+        } catch (err) {
+            errorBox.textContent = err.message || 'Invalid email or password.';
+            errorBox.classList.add('visible');
+            setBtnReady(btn);
+        }
+    });
+});
+</script>
+{% endblock %}

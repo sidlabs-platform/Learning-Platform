@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit ' + course.title if course else 'Create Course' }} — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: var(--space-8) var(--space-4);">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb__item"><a href="/admin" class="breadcrumb__link">Admin</a></li>
+            <li class="breadcrumb__item"><a href="/admin/courses" class="breadcrumb__link">Courses</a></li>
+            <li class="breadcrumb__item"><span class="breadcrumb__current">{{ 'Edit Course' if course else 'New Course' }}</span></li>
+        </ol>
+    </nav>
+
+    <h1 style="font-size:var(--font-size-3xl); font-weight:var(--font-weight-bold); margin-bottom:var(--space-6);">
+        {{ '✏️ Edit Course' if course else '📝 Create New Course' }}
+    </h1>
+
+    <div class="course-editor">
+        <!-- Main form area -->
+        <div class="course-editor__main">
+            <form id="course-form" novalidate>
+                <div class="card" style="margin-bottom:var(--space-6);">
+                    <div class="card__body">
+                        <h2 style="font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-5);">
+                            Course Details
+                        </h2>
+
+                        <div class="form-group">
+                            <label for="title" class="form-label form-label-required">Title</label>
+                            <input type="text"
+                                   id="title"
+                                   name="title"
+                                   class="form-input"
+                                   placeholder="e.g. Introduction to Git & GitHub"
+                                   value="{{ course.title | e if course else '' }}"
+                                   required
+                                   maxlength="500"
+                                   autofocus>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description" class="form-label form-label-required">Description</label>
+                            <textarea id="description"
+                                      name="description"
+                                      class="form-textarea"
+                                      placeholder="Provide a detailed description of the course…"
+                                      required
+                                      rows="5">{{ course.description | e if course else '' }}</textarea>
+                        </div>
+
+                        <div class="form-row form-row-3">
+                            <div class="form-group">
+                                <label for="difficulty" class="form-label form-label-required">Difficulty</label>
+                                <select id="difficulty" name="difficulty" class="form-select" required>
+                                    <option value="">Select difficulty…</option>
+                                    {% set diff_val = (course.difficulty.value if course and course.difficulty is not string else (course.difficulty if course else '')) %}
+                                    <option value="beginner" {{ 'selected' if diff_val == 'beginner' else '' }}>Beginner</option>
+                                    <option value="intermediate" {{ 'selected' if diff_val == 'intermediate' else '' }}>Intermediate</option>
+                                    <option value="advanced" {{ 'selected' if diff_val == 'advanced' else '' }}>Advanced</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="estimated_duration" class="form-label form-label-required">Duration (minutes)</label>
+                                <input type="number"
+                                       id="estimated_duration"
+                                       name="estimated_duration"
+                                       class="form-input"
+                                       placeholder="e.g. 120"
+                                       min="1"
+                                       required
+                                       value="{{ course.estimated_duration if course else '' }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tags" class="form-label">Tags</label>
+                                <input type="text"
+                                       id="tags"
+                                       name="tags"
+                                       class="form-input"
+                                       placeholder="git, github, version-control"
+                                       value="{{ course.tags | join(', ') if course and course.tags else '' }}">
+                                <span class="form-hint">Comma-separated list of tags</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:var(--space-3); margin-bottom:var(--space-6);">
+                    <button type="submit" class="btn btn-primary" id="save-course-btn">
+                        {{ '💾 Save Changes' if course else '✅ Create Course' }}
+                    </button>
+                    <a href="/admin/courses" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+
+            <!-- Module Management (only when editing) -->
+            {% if course %}
+            <div style="margin-top:var(--space-8);">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+                    <h2 style="font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold);">
+                        📦 Modules
+                    </h2>
+                    <button class="btn btn-primary btn-sm" onclick="showAddModuleForm()">
+                        ＋ Add Module
+                    </button>
+                </div>
+
+                <!-- Add Module inline form -->
+                <div id="add-module-form" class="card" style="display:none; margin-bottom:var(--space-4);">
+                    <div class="card__body">
+                        <h3 style="font-size:var(--font-size-lg); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-4);">
+                            New Module
+                        </h3>
+                        <div class="form-group">
+                            <label for="mod-title" class="form-label form-label-required">Module Title</label>
+                            <input type="text" id="mod-title" class="form-input" placeholder="e.g. Getting Started" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="mod-summary" class="form-label form-label-required">Summary</label>
+                            <textarea id="mod-summary" class="form-textarea" rows="3" placeholder="Brief overview of this module…" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="mod-sort-order" class="form-label">Sort Order</label>
+                            <input type="number" id="mod-sort-order" class="form-input" value="{{ modules | length }}" min="0">
+                        </div>
+                        <div style="display:flex; gap:var(--space-3);">
+                            <button class="btn btn-primary btn-sm" onclick="saveModule()" id="save-module-btn">Save Module</button>
+                            <button class="btn btn-secondary btn-sm" onclick="hideAddModuleForm()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing modules -->
+                <div id="modules-list">
+                    {% if modules %}
+                        {% for module in modules %}
+                        <div class="module-editor" id="module-{{ module.id }}">
+                            <div class="module-editor__header">
+                                <div style="display:flex; align-items:center; gap:var(--space-2); flex:1;">
+                                    <span style="color:var(--color-text-muted); cursor:pointer;" aria-hidden="true">☰</span>
+                                    <strong style="font-size:var(--font-size-sm);">{{ module.title | e }}</strong>
+                                    <span class="badge badge-neutral" style="font-size:var(--font-size-xs);">
+                                        {{ module.lessons | length }} lesson{{ 's' if module.lessons | length != 1 else '' }}
+                                    </span>
+                                </div>
+                                <div class="module-editor__actions">
+                                    <button class="btn btn-ghost btn-sm"
+                                            onclick="toggleModuleContent('{{ module.id }}')"
+                                            aria-expanded="false"
+                                            aria-controls="module-content-{{ module.id }}"
+                                            title="Expand/collapse">
+                                        ▼
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="module-content-{{ module.id }}" class="module-editor__lessons" style="display:none;">
+                                {% for lesson in module.lessons %}
+                                <div class="lesson-editor-item">
+                                    <span class="lesson-editor-item__drag" aria-hidden="true">⠿</span>
+                                    <span class="lesson-editor-item__name">{{ lesson.title | e }}</span>
+                                    <span class="badge badge-neutral" style="font-size:var(--font-size-xs);">{{ lesson.estimated_minutes }} min</span>
+                                    <a href="/admin/lessons/{{ lesson.id }}/edit"
+                                       class="btn btn-ghost btn-sm"
+                                       title="Edit lesson">
+                                        ✏️
+                                    </a>
+                                </div>
+                                {% endfor %}
+
+                                <!-- Add Lesson link -->
+                                <div style="padding:var(--space-3) var(--space-4); border-top:1px solid var(--color-border-muted);">
+                                    <button class="btn btn-ghost btn-sm" onclick="showAddLessonForm('{{ module.id }}')">
+                                        ＋ Add Lesson
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" onclick="showAddQuizForm('{{ module.id }}')">
+                                        ❓ Add Quiz Question
+                                    </button>
+                                </div>
+
+                                <!-- Inline Add Lesson form -->
+                                <div id="add-lesson-{{ module.id }}" style="display:none; padding:var(--space-4); border-top:1px solid var(--color-border-muted); background:var(--color-gray-50);">
+                                    <h4 style="font-size:var(--font-size-sm); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-3);">
+                                        New Lesson
+                                    </h4>
+                                    <div class="form-group">
+                                        <label class="form-label form-label-required">Lesson Title</label>
+                                        <input type="text" class="form-input lesson-title" placeholder="e.g. Introduction to Branches">
+                                    </div>
+                                    <div class="form-row form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label">Est. Minutes</label>
+                                            <input type="number" class="form-input lesson-minutes" value="10" min="1">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Sort Order</label>
+                                            <input type="number" class="form-input lesson-sort-order" value="{{ module.lessons | length }}" min="0">
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:var(--space-2);">
+                                        <button class="btn btn-primary btn-sm" onclick="saveLesson('{{ module.id }}')">Save Lesson</button>
+                                        <button class="btn btn-secondary btn-sm" onclick="hideAddLessonForm('{{ module.id }}')">Cancel</button>
+                                    </div>
+                                </div>
+
+                                <!-- Inline Add Quiz form -->
+                                <div id="add-quiz-{{ module.id }}" style="display:none; padding:var(--space-4); border-top:1px solid var(--color-border-muted); background:var(--color-gray-50);">
+                                    <h4 style="font-size:var(--font-size-sm); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-3);">
+                                        New Quiz Question
+                                    </h4>
+                                    <div class="form-group">
+                                        <label class="form-label form-label-required">Question</label>
+                                        <textarea class="form-textarea quiz-question" rows="2" placeholder="What is the purpose of git commit?"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label form-label-required">Options</label>
+                                        <input type="text" class="form-input quiz-option-0" placeholder="Option A" style="margin-bottom:var(--space-2);">
+                                        <input type="text" class="form-input quiz-option-1" placeholder="Option B" style="margin-bottom:var(--space-2);">
+                                        <input type="text" class="form-input quiz-option-2" placeholder="Option C" style="margin-bottom:var(--space-2);">
+                                        <input type="text" class="form-input quiz-option-3" placeholder="Option D">
+                                    </div>
+                                    <div class="form-row form-row-2">
+                                        <div class="form-group">
+                                            <label class="form-label form-label-required">Correct Answer</label>
+                                            <select class="form-select quiz-correct-answer">
+                                                <option value="0">Option A</option>
+                                                <option value="1">Option B</option>
+                                                <option value="2">Option C</option>
+                                                <option value="3">Option D</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Explanation</label>
+                                            <input type="text" class="form-input quiz-explanation" placeholder="Brief explanation for the correct answer">
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:var(--space-2);">
+                                        <button class="btn btn-primary btn-sm" onclick="saveQuiz('{{ module.id }}')">Save Question</button>
+                                        <button class="btn btn-secondary btn-sm" onclick="hideAddQuizForm('{{ module.id }}')">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="card" style="text-align:center; padding:var(--space-8); color:var(--color-text-muted);">
+                            <p>No modules yet. Click "Add Module" to get started.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="course-editor__sidebar">
+            <div class="card">
+                <div class="card__body">
+                    <h3 style="font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-3);">
+                        Course Status
+                    </h3>
+                    {% if course %}
+                        {% set status_val = course.status.value if course.status is not string else course.status %}
+                        {% if status_val == 'published' %}
+                            <span class="badge badge-published" style="margin-bottom:var(--space-3); display:inline-block;">Published</span>
+                        {% else %}
+                            <span class="badge badge-draft" style="margin-bottom:var(--space-3); display:inline-block;">Draft</span>
+                        {% endif %}
+                        <div class="publish-toggle" style="margin-top:var(--space-3);">
+                            {% if status_val == 'published' %}
+                                <button class="btn btn-outline btn-sm btn-block" onclick="togglePublish('unpublish')">
+                                    📤 Unpublish
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success btn-sm btn-block" onclick="togglePublish('publish')">
+                                    🚀 Publish Course
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p style="color:var(--color-text-muted); font-size:var(--font-size-sm);">
+                            Save the course first, then you can publish it and add modules.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if course %}
+            <div class="card">
+                <div class="card__body">
+                    <h3 style="font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); margin-bottom:var(--space-3);">
+                        Quick Info
+                    </h3>
+                    <dl style="font-size:var(--font-size-sm); margin:0;">
+                        <dt style="color:var(--color-text-muted); margin-bottom:var(--space-1);">Created</dt>
+                        <dd style="margin:0 0 var(--space-3) 0;">{{ course.created_at.strftime('%b %d, %Y') if course.created_at else '—' }}</dd>
+                        <dt style="color:var(--color-text-muted); margin-bottom:var(--space-1);">Last Updated</dt>
+                        <dd style="margin:0 0 var(--space-3) 0;">{{ course.updated_at.strftime('%b %d, %Y') if course.updated_at else '—' }}</dd>
+                        <dt style="color:var(--color-text-muted); margin-bottom:var(--space-1);">Modules</dt>
+                        <dd style="margin:0;">{{ modules | length }}</dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const courseId = "{{ course.id if course else '' }}";
+const isEditing = courseId !== '';
+
+/* ---- Course Save ---- */
+document.getElementById('course-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearFormErrors(this);
+
+    var title = document.getElementById('title').value.trim();
+    var description = document.getElementById('description').value.trim();
+    var difficulty = document.getElementById('difficulty').value;
+    var duration = document.getElementById('estimated_duration').value;
+    var tagsRaw = document.getElementById('tags').value.trim();
+
+    /* Basic validation */
+    var valid = true;
+    if (!title) { showFieldError(document.getElementById('title'), 'Title is required.'); valid = false; }
+    if (!description) { showFieldError(document.getElementById('description'), 'Description is required.'); valid = false; }
+    if (!difficulty) { showFieldError(document.getElementById('difficulty'), 'Please select a difficulty.'); valid = false; }
+    if (!duration || parseInt(duration) < 1) { showFieldError(document.getElementById('estimated_duration'), 'Duration must be at least 1 minute.'); valid = false; }
+    if (!valid) return;
+
+    var tags = tagsRaw ? tagsRaw.split(',').map(function(t) { return t.trim(); }).filter(Boolean) : [];
+
+    var body = JSON.stringify({
+        title: title,
+        description: description,
+        difficulty: difficulty,
+        estimated_duration: parseInt(duration),
+        tags: tags,
+    });
+
+    var btn = document.getElementById('save-course-btn');
+    setBtnLoading(btn, 'Saving…');
+
+    try {
+        if (isEditing) {
+            await apiFetch('/api/v1/courses/' + courseId, { method: 'PATCH', body: body });
+            showToast('Course updated successfully!', 'success');
+        } else {
+            var created = await apiFetch('/api/v1/courses/', { method: 'POST', body: body });
+            showToast('Course created! Redirecting…', 'success');
+            setTimeout(function() {
+                window.location.href = '/admin/courses/' + created.id + '/edit';
+            }, 800);
+        }
+    } catch (err) {
+        showToast(err.message || 'Failed to save course.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+});
+
+/* ---- Publish/Unpublish ---- */
+async function togglePublish(action) {
+    try {
+        await apiFetch('/api/v1/courses/' + courseId + '/' + action, { method: 'POST' });
+        showToast('Course ' + action + 'ed!', 'success');
+        setTimeout(function() { window.location.reload(); }, 600);
+    } catch (err) {
+        showToast(err.message || 'Failed to ' + action + '.', 'danger');
+    }
+}
+
+/* ---- Module accordion ---- */
+function toggleModuleContent(moduleId) {
+    var el = document.getElementById('module-content-' + moduleId);
+    var btn = document.querySelector('#module-' + moduleId + ' .module-editor__actions button');
+    if (el.style.display === 'none') {
+        el.style.display = 'block';
+        if (btn) { btn.textContent = '▲'; btn.setAttribute('aria-expanded', 'true'); }
+    } else {
+        el.style.display = 'none';
+        if (btn) { btn.textContent = '▼'; btn.setAttribute('aria-expanded', 'false'); }
+    }
+}
+
+/* ---- Add Module ---- */
+function showAddModuleForm() {
+    document.getElementById('add-module-form').style.display = 'block';
+    document.getElementById('mod-title').focus();
+}
+function hideAddModuleForm() {
+    document.getElementById('add-module-form').style.display = 'none';
+}
+
+async function saveModule() {
+    var title = document.getElementById('mod-title').value.trim();
+    var summary = document.getElementById('mod-summary').value.trim();
+    var sortOrder = parseInt(document.getElementById('mod-sort-order').value) || 0;
+
+    if (!title || !summary) {
+        showToast('Module title and summary are required.', 'warning');
+        return;
+    }
+
+    var btn = document.getElementById('save-module-btn');
+    setBtnLoading(btn, 'Saving…');
+
+    try {
+        await apiFetch('/api/v1/courses/' + courseId + '/modules', {
+            method: 'POST',
+            body: JSON.stringify({ title: title, summary: summary, sort_order: sortOrder }),
+        });
+        showToast('Module created!', 'success');
+        setTimeout(function() { window.location.reload(); }, 600);
+    } catch (err) {
+        showToast(err.message || 'Failed to create module.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+}
+
+/* ---- Add Lesson ---- */
+function showAddLessonForm(moduleId) {
+    document.getElementById('add-lesson-' + moduleId).style.display = 'block';
+}
+function hideAddLessonForm(moduleId) {
+    document.getElementById('add-lesson-' + moduleId).style.display = 'none';
+}
+
+async function saveLesson(moduleId) {
+    var container = document.getElementById('add-lesson-' + moduleId);
+    var title = container.querySelector('.lesson-title').value.trim();
+    var minutes = parseInt(container.querySelector('.lesson-minutes').value) || 10;
+    var sortOrder = parseInt(container.querySelector('.lesson-sort-order').value) || 0;
+
+    if (!title) {
+        showToast('Lesson title is required.', 'warning');
+        return;
+    }
+
+    try {
+        await apiFetch('/api/v1/courses/' + courseId + '/modules/' + moduleId + '/lessons', {
+            method: 'POST',
+            body: JSON.stringify({
+                title: title,
+                estimated_minutes: minutes,
+                sort_order: sortOrder,
+                markdown_content: '',
+            }),
+        });
+        showToast('Lesson created!', 'success');
+        setTimeout(function() { window.location.reload(); }, 600);
+    } catch (err) {
+        showToast(err.message || 'Failed to create lesson.', 'danger');
+    }
+}
+
+/* ---- Add Quiz Question ---- */
+function showAddQuizForm(moduleId) {
+    document.getElementById('add-quiz-' + moduleId).style.display = 'block';
+}
+function hideAddQuizForm(moduleId) {
+    document.getElementById('add-quiz-' + moduleId).style.display = 'none';
+}
+
+async function saveQuiz(moduleId) {
+    var container = document.getElementById('add-quiz-' + moduleId);
+    var question = container.querySelector('.quiz-question').value.trim();
+    var options = [
+        container.querySelector('.quiz-option-0').value.trim(),
+        container.querySelector('.quiz-option-1').value.trim(),
+        container.querySelector('.quiz-option-2').value.trim(),
+        container.querySelector('.quiz-option-3').value.trim(),
+    ];
+    var correctIdx = parseInt(container.querySelector('.quiz-correct-answer').value);
+    var explanation = container.querySelector('.quiz-explanation').value.trim();
+
+    if (!question) { showToast('Question text is required.', 'warning'); return; }
+    var filledOptions = options.filter(Boolean);
+    if (filledOptions.length < 2) { showToast('At least 2 options are required.', 'warning'); return; }
+
+    try {
+        await apiFetch('/api/v1/courses/' + courseId + '/modules/' + moduleId + '/quiz', {
+            method: 'POST',
+            body: JSON.stringify({
+                question: question,
+                options: filledOptions,
+                correct_answer: correctIdx,
+                explanation: explanation || null,
+            }),
+        });
+        showToast('Quiz question created!', 'success');
+        hideAddQuizForm(moduleId);
+        /* Clear form */
+        container.querySelector('.quiz-question').value = '';
+        container.querySelectorAll('.form-input').forEach(function(inp) { inp.value = ''; });
+    } catch (err) {
+        showToast(err.message || 'Failed to create quiz question.', 'danger');
+    }
+}
+</script>
+{% endblock %}

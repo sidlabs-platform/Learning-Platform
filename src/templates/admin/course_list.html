@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Courses — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: var(--space-8) var(--space-4);">
+
+    <!-- Toolbar -->
+    <div class="course-toolbar">
+        <div>
+            <h1 style="font-size:var(--font-size-3xl); font-weight:var(--font-weight-bold); margin:0;">
+                📚 Course Management
+            </h1>
+            <p style="color:var(--color-text-secondary); margin-top:var(--space-2);">
+                {{ courses | length }} course{{ 's' if courses | length != 1 else '' }} total
+            </p>
+        </div>
+        <div style="display:flex; gap:var(--space-3); flex-wrap:wrap;">
+            <a href="/admin/ai/generate" class="btn btn-secondary">
+                ✨ AI Generate
+            </a>
+            <a href="/admin/courses/new" class="btn btn-primary">
+                ＋ Create New Course
+            </a>
+        </div>
+    </div>
+
+    <!-- Course list -->
+    {% if courses %}
+    <div class="table-wrapper">
+        <table class="table" aria-label="All courses">
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Difficulty</th>
+                    <th>Duration</th>
+                    <th>Created</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="course-table-body">
+                {% for course in courses %}
+                <tr id="course-row-{{ course.id }}">
+                    <td>
+                        <div class="course-title-cell">
+                            <div class="course-title-cell__info">
+                                <div class="course-title-cell__name">{{ course.title | e }}</div>
+                                <div class="course-title-cell__meta">
+                                    {% if course.tags %}
+                                        {% for tag in course.tags[:3] %}
+                                            <span class="tag">{{ tag | e }}</span>
+                                        {% endfor %}
+                                        {% if course.tags | length > 3 %}
+                                            <span class="tag">+{{ course.tags | length - 3 }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if course.status == "published" or course.status.value == "published" %}
+                            <span class="badge badge-published">Published</span>
+                        {% else %}
+                            <span class="badge badge-draft">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set diff_val = course.difficulty.value if course.difficulty is not string else course.difficulty %}
+                        <span class="badge badge-{{ diff_val }}">{{ diff_val | capitalize }}</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        {{ course.estimated_duration }} min
+                    </td>
+                    <td style="white-space:nowrap; color:var(--color-text-secondary); font-size:var(--font-size-sm);">
+                        {{ course.created_at.strftime('%b %d, %Y') if course.created_at else '—' }}
+                    </td>
+                    <td class="col-actions">
+                        <div style="display:flex; align-items:center; gap:var(--space-2); justify-content:flex-end;">
+                            <a href="/admin/courses/{{ course.id }}/edit"
+                               class="btn btn-secondary btn-sm"
+                               title="Edit course">
+                                ✏️ Edit
+                            </a>
+                            {% set status_val = course.status.value if course.status is not string else course.status %}
+                            {% if status_val == "published" %}
+                                <button class="btn btn-outline btn-sm"
+                                        onclick="togglePublish('{{ course.id }}', 'unpublish')"
+                                        title="Unpublish course">
+                                    📤 Unpublish
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success btn-sm"
+                                        onclick="togglePublish('{{ course.id }}', 'publish')"
+                                        title="Publish course">
+                                    🚀 Publish
+                                </button>
+                            {% endif %}
+                            <button class="btn btn-danger btn-sm"
+                                    onclick="deleteCourse('{{ course.id }}', '{{ course.title | e }}')"
+                                    title="Delete course">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card" style="text-align:center; padding:var(--space-16);">
+        <p style="font-size:2rem; margin-bottom:var(--space-4);">📭</p>
+        <h2 style="font-size:var(--font-size-xl); margin-bottom:var(--space-2);">No courses yet</h2>
+        <p style="color:var(--color-text-secondary); margin-bottom:var(--space-6);">
+            Get started by creating your first course or using AI to generate one.
+        </p>
+        <div style="display:flex; gap:var(--space-3); justify-content:center;">
+            <a href="/admin/courses/new" class="btn btn-primary">＋ Create Course</a>
+            <a href="/admin/ai/generate" class="btn btn-secondary">✨ AI Generate</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Delete confirmation modal -->
+<div class="modal-overlay" id="delete-modal" aria-hidden="true">
+    <div class="modal modal-sm" role="dialog" aria-labelledby="delete-modal-title" aria-modal="true">
+        <div class="modal__header">
+            <h3 class="modal__title" id="delete-modal-title">Delete Course</h3>
+            <button class="modal__close" onclick="closeDeleteModal()" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal__body">
+            <p>Are you sure you want to permanently delete <strong id="delete-course-name"></strong>?</p>
+            <p style="color:var(--color-danger); font-size:var(--font-size-sm); margin-top:var(--space-2);">
+                This action cannot be undone. All modules, lessons, and quiz questions will be removed.
+            </p>
+        </div>
+        <div class="modal__footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" id="confirm-delete-btn" onclick="confirmDelete()">Delete Course</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pendingDeleteId = null;
+
+/**
+ * Publish or unpublish a course.
+ * @param {string} courseId
+ * @param {'publish'|'unpublish'} action
+ */
+async function togglePublish(courseId, action) {
+    try {
+        await apiFetch('/api/v1/courses/' + courseId + '/' + action, { method: 'POST' });
+        showToast('Course ' + action + 'ed successfully!', 'success');
+        setTimeout(function() { window.location.reload(); }, 600);
+    } catch (err) {
+        showToast(err.message || 'Failed to ' + action + ' course.', 'danger');
+    }
+}
+
+/**
+ * Open the delete confirmation modal.
+ * @param {string} courseId
+ * @param {string} courseName
+ */
+function deleteCourse(courseId, courseName) {
+    pendingDeleteId = courseId;
+    document.getElementById('delete-course-name').textContent = courseName;
+    var modal = document.getElementById('delete-modal');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.getElementById('confirm-delete-btn').focus();
+}
+
+/** Close the delete confirmation modal. */
+function closeDeleteModal() {
+    pendingDeleteId = null;
+    var modal = document.getElementById('delete-modal');
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+/** Confirm and execute the course deletion. */
+async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    var btn = document.getElementById('confirm-delete-btn');
+    setBtnLoading(btn, 'Deleting…');
+
+    try {
+        await apiFetch('/api/v1/courses/' + pendingDeleteId, { method: 'DELETE' });
+        showToast('Course deleted successfully.', 'success');
+        closeDeleteModal();
+        var row = document.getElementById('course-row-' + pendingDeleteId);
+        if (row) {
+            row.style.opacity = '0';
+            row.style.transition = 'opacity 0.3s ease';
+            setTimeout(function() { row.remove(); }, 300);
+        }
+    } catch (err) {
+        showToast(err.message || 'Failed to delete course.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+}
+
+/* Close modal on Escape key */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteModal();
+});
+
+/* Close modal on overlay click */
+document.getElementById('delete-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+</script>
+{% endblock %}

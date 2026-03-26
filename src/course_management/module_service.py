@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.course_management.schemas import ModuleCreate, ModuleUpdate
 from src.models import Module
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ async def update_module(
     db.add(module)
     await db.flush()
     await db.refresh(module)
-    logger.info("Updated module %s", module_id)
+    logger.info("Updated module %s", sanitize_log(module_id))
     return module
 
 

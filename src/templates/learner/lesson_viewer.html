@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}{{ lesson.title | e }} — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/learner.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+        <a href="/courses/{{ course.id }}" style="color: var(--color-primary); text-decoration: none;">
+            ← {{ course.title | e }}
+        </a>
+    </nav>
+
+    <div class="lesson-layout">
+
+        <!-- ============================================
+             Sidebar
+        ============================================= -->
+        <aside class="lesson-sidebar" aria-label="Course navigation">
+            <div class="lesson-sidebar__course">
+                <div class="lesson-sidebar__course-name">{{ course.title | e }}</div>
+                <div class="lesson-sidebar__progress">
+                    <div style="display: flex; justify-content: space-between; font-size: var(--font-size-xs); color: var(--color-text-muted); margin-bottom: var(--space-1);">
+                        <span>Progress</span>
+                        <span>{{ completed_count }}/{{ total_lessons }}</span>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div
+                            class="progress-bar{% if total_lessons > 0 and completed_count >= total_lessons %} success{% endif %}"
+                            role="progressbar"
+                            aria-valuenow="{{ ((completed_count / total_lessons * 100) if total_lessons > 0 else 0) | round | int }}"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            style="width: {{ ((completed_count / total_lessons * 100) if total_lessons > 0 else 0) | round | int }}%"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
+            {% for m in all_modules %}
+            <div style="border-bottom: var(--border);">
+                <div style="padding: var(--space-3) var(--space-4); background: var(--color-gray-50); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
+                    {{ m.title | e }}
+                </div>
+                <ul style="list-style: none;">
+                    {% for l in m.lessons %}
+                    <li>
+                        <a
+                            href="/courses/{{ course.id }}/lessons/{{ l.id }}"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                gap: var(--space-2);
+                                padding: var(--space-2) var(--space-4);
+                                font-size: var(--font-size-sm);
+                                color: {{ 'var(--color-primary)' if l.id == lesson.id else 'var(--color-text-primary)' }};
+                                font-weight: {{ 'var(--font-weight-semibold)' if l.id == lesson.id else 'var(--font-weight-normal)' }};
+                                background: {{ 'var(--color-primary-light)' if l.id == lesson.id else 'transparent' }};
+                                text-decoration: none;
+                                border-left: 3px solid {{ 'var(--color-primary)' if l.id == lesson.id else 'transparent' }};
+                                transition: background var(--transition-fast);
+                            "
+                            {% if l.id == lesson.id %}aria-current="page"{% endif %}
+                        >
+                            <span class="lesson-check{% if progress_map.get(l.id, false) %} completed{% endif %}" style="width: 1rem; height: 1rem; font-size: 0.6rem;" aria-label="{{ 'Completed' if progress_map.get(l.id, false) else 'Not completed' }}">
+                                {% if progress_map.get(l.id, false) %}✓{% endif %}
+                            </span>
+                            <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ l.title | e }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </aside>
+
+        <!-- ============================================
+             Main Content
+        ============================================= -->
+        <article class="lesson-content">
+            <header class="lesson-content__header">
+                <h1 class="lesson-content__title">{{ lesson.title | e }}</h1>
+                <div class="lesson-content__meta">
+                    <span>📚 {{ module.title | e }}</span>
+                    <span>⏱️ {{ lesson.estimated_minutes }} min</span>
+                </div>
+            </header>
+
+            <div class="lesson-content__body prose">
+                {{ lesson.markdown_content | safe }}
+            </div>
+
+            <!-- Mark Complete Button -->
+            <div class="lesson-complete-btn">
+                <button
+                    type="button"
+                    id="complete-btn"
+                    class="btn {% if progress_map.get(lesson.id, false) %}btn-success{% else %}btn-primary{% endif %} btn-lg"
+                    data-lesson-id="{{ lesson.id }}"
+                    {% if progress_map.get(lesson.id, false) %}disabled aria-disabled="true"{% endif %}
+                >
+                    {% if progress_map.get(lesson.id, false) %}
+                        ✓ Lesson Completed
+                    {% else %}
+                        Mark as Complete
+                    {% endif %}
+                </button>
+            </div>
+
+            <!-- Prev / Next Navigation -->
+            <nav class="lesson-nav" aria-label="Lesson navigation">
+                {% if prev_lesson %}
+                <a href="/courses/{{ course.id }}/lessons/{{ prev_lesson.id }}" class="btn btn-secondary">
+                    ← Previous Lesson
+                </a>
+                {% else %}
+                <span></span>
+                {% endif %}
+
+                {% if next_lesson %}
+                <a href="/courses/{{ course.id }}/lessons/{{ next_lesson.id }}" class="btn btn-primary">
+                    Next Lesson →
+                </a>
+                {% else %}
+                <a href="/courses/{{ course.id }}" class="btn btn-secondary">
+                    Back to Course
+                </a>
+                {% endif %}
+            </nav>
+        </article>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+onDOMReady(function () {
+    var lessonId = '{{ lesson.id }}';
+    var moduleId = '{{ module.id }}';
+    var courseId = '{{ course.id }}';
+
+    /* Auto-record lesson view */
+    apiFetch('/api/v1/progress/lessons/' + lessonId + '/view', {
+        method: 'POST',
+        body: JSON.stringify({ module_id: moduleId }),
+    }).catch(function () {
+        /* Silently ignore view tracking errors */
+    });
+
+    /* Mark as complete button */
+    var completeBtn = document.getElementById('complete-btn');
+    if (completeBtn && !completeBtn.disabled) {
+        completeBtn.addEventListener('click', async function () {
+            setBtnLoading(completeBtn, 'Completing…');
+
+            try {
+                await apiFetch('/api/v1/progress/lessons/' + lessonId + '/complete', {
+                    method: 'POST',
+                });
+                completeBtn.textContent = '✓ Lesson Completed';
+                completeBtn.classList.remove('btn-primary');
+                completeBtn.classList.add('btn-success');
+                completeBtn.disabled = true;
+                completeBtn.setAttribute('aria-disabled', 'true');
+                showToast('Lesson completed!', 'success');
+
+                /* Update the sidebar checkmark for this lesson */
+                var sidebarLinks = document.querySelectorAll('a[href*="' + lessonId + '"] .lesson-check');
+                sidebarLinks.forEach(function (el) {
+                    el.classList.add('completed');
+                    el.innerHTML = '✓';
+                });
+            } catch (err) {
+                showToast(err.message || 'Failed to mark complete.', 'danger');
+                setBtnReady(completeBtn);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

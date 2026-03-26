@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/learner.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-grid">
+
+        <!-- ============================================
+             Greeting
+        ============================================= -->
+        <section class="dashboard-section">
+            <h1 class="dashboard-section__title" style="font-size: var(--font-size-2xl);">
+                👋 Welcome back, {{ user.name | e }}!
+            </h1>
+        </section>
+
+        <!-- ============================================
+             Stats Row
+        ============================================= -->
+        <section class="dashboard-section">
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <span class="stat-card__icon" aria-hidden="true">📚</span>
+                    <span class="stat-card__label">Enrolled</span>
+                    <span class="stat-card__value">{{ enrollments | length }}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__icon" aria-hidden="true">🔄</span>
+                    <span class="stat-card__label">In Progress</span>
+                    <span class="stat-card__value">{{ enrollments | selectattr('progress.progress_percentage', 'gt', 0) | selectattr('progress.progress_percentage', 'lt', 100) | list | length }}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-card__icon" aria-hidden="true">✅</span>
+                    <span class="stat-card__label">Completed</span>
+                    <span class="stat-card__value">{{ enrollments | selectattr('progress.progress_percentage', 'eq', 100) | list | length }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================
+             Enrolled Courses
+        ============================================= -->
+        <section class="dashboard-section">
+            <h2 class="dashboard-section__title">
+                My Courses
+                <a href="/catalog" class="btn btn-secondary btn-sm">Browse Catalog</a>
+            </h2>
+
+            {% if enrollments %}
+            <div class="catalog-grid">
+                {% for item in enrollments %}
+                {% set course = item.course %}
+                {% set progress = item.progress %}
+                {% set enrollment = item.enrollment %}
+                <div class="card course-progress-card">
+                    <div class="card__body">
+                        <div class="course-progress-card__header">
+                            <span class="course-progress-card__emoji" aria-hidden="true">📘</span>
+                            <div class="course-progress-card__info">
+                                <div class="course-progress-card__title">
+                                    <a href="/courses/{{ course.id }}">{{ course.title | e }}</a>
+                                </div>
+                                <div class="course-progress-card__meta">
+                                    <span class="badge badge-{{ course.difficulty }}">{{ course.difficulty | capitalize }}</span>
+                                    <span>{{ course.estimated_duration }} min</span>
+                                    <span class="badge {% if enrollment.status == 'completed' %}badge-success{% elif enrollment.status == 'in_progress' %}badge-info{% else %}badge-neutral{% endif %}">
+                                        {{ enrollment.status | replace('_', ' ') | capitalize }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="course-progress-card__progress">
+                            <div class="progress">
+                                <div
+                                    class="progress-bar{% if progress.progress_percentage >= 100 %} success{% endif %}"
+                                    role="progressbar"
+                                    aria-valuenow="{{ progress.progress_percentage | round | int }}"
+                                    aria-valuemin="0"
+                                    aria-valuemax="100"
+                                    aria-label="Course progress"
+                                    style="width: {{ progress.progress_percentage | round | int }}%"
+                                ></div>
+                            </div>
+                            <span class="course-progress-card__pct">
+                                {{ progress.progress_percentage | round | int }}% complete
+                                · {{ progress.completed_lessons }}/{{ progress.total_lessons }} lessons
+                            </span>
+                        </div>
+
+                        <div class="course-progress-card__actions">
+                            <a href="/courses/{{ course.id }}" class="btn btn-primary btn-sm btn-block">
+                                {% if progress.progress_percentage >= 100 %}
+                                    Review Course
+                                {% elif progress.progress_percentage > 0 %}
+                                    Continue Learning
+                                {% else %}
+                                    Start Course
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- Empty state -->
+            <div class="card card-flat" style="text-align: center; padding: var(--space-10) var(--space-6);">
+                <div style="font-size: 3rem; margin-bottom: var(--space-4);" aria-hidden="true">📖</div>
+                <h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--space-2);">
+                    No courses yet
+                </h3>
+                <p style="color: var(--color-text-muted); margin-bottom: var(--space-6); font-size: var(--font-size-sm);">
+                    Browse the catalog and enroll in a course to get started.
+                </p>
+                <a href="/catalog" class="btn btn-primary btn-lg">Browse the Catalog</a>
+            </div>
+            {% endif %}
+        </section>
+
+    </div>
+</div>
+{% endblock %}

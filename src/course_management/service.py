@@ -28,6 +28,7 @@ from src.course_management.schemas import (
     QuizQuestionCreate,
 )
 from src.models import Course, Lesson, Module, QuizQuestion
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +115,7 @@ async def update_course(
 
     course.updated_at = datetime.utcnow()
     await db.flush()
-    logger.info("Course updated: course_id=%s fields=%s", course_id, list(update_data.keys()))
+    logger.info("Course updated: course_id=%s fields=%s", sanitize_log(course_id), list(update_data.keys()))
     return course
 
 
@@ -133,7 +134,7 @@ async def delete_course(course_id: str, db: AsyncSession) -> bool:
         return False
     await db.delete(course)
     await db.flush()
-    logger.info("Course deleted: course_id=%s", course_id)
+    logger.info("Course deleted: course_id=%s", sanitize_log(course_id))
     return True
 
 
@@ -161,7 +162,7 @@ async def publish_course(course_id: str, db: AsyncSession) -> Optional[Course]:
     course.status = "published"
     course.updated_at = datetime.utcnow()
     await db.flush()
-    logger.info("Course published: course_id=%s", course_id)
+    logger.info("Course published: course_id=%s", sanitize_log(course_id))
     return course
 
 
@@ -189,7 +190,7 @@ async def unpublish_course(course_id: str, db: AsyncSession) -> Optional[Course]
     course.status = "draft"
     course.updated_at = datetime.utcnow()
     await db.flush()
-    logger.info("Course unpublished: course_id=%s", course_id)
+    logger.info("Course unpublished: course_id=%s", sanitize_log(course_id))
     return course
 
 

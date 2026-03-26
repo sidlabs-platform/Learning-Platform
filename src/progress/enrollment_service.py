@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Enrollment
 from src.progress.schemas import EnrollmentStatus
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +65,9 @@ async def enroll_user(
     await db.flush()
     logger.info(
         "User enrolled: enrollment_id=%s user_id=%s course_id=%s",
-        enrollment.id,
-        user_id,
-        course_id,
+        sanitize_log(enrollment.id),
+        sanitize_log(user_id),
+        sanitize_log(course_id),
     )
     return enrollment
 

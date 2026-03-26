@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Quiz: {{ module.title | e }} — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/learner.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
+        <a href="/courses/{{ course.id }}" style="color: var(--color-primary); text-decoration: none;">
+            ← {{ course.title | e }}
+        </a>
+    </nav>
+
+    <div class="quiz-container">
+
+        <!-- ============================================
+             Quiz Header
+        ============================================= -->
+        <div class="quiz-header">
+            <h1 class="quiz-header__title">Module Quiz</h1>
+            <p class="quiz-header__sub">{{ module.title | e }}</p>
+        </div>
+
+        {% if questions %}
+
+        <!-- Progress -->
+        <div class="quiz-progress">
+            <div class="quiz-progress__label">
+                <span id="quiz-answered">0</span> / {{ questions | length }} answered
+            </div>
+            <div class="progress">
+                <div
+                    id="quiz-progress-bar"
+                    class="progress-bar"
+                    role="progressbar"
+                    aria-valuenow="0"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    style="width: 0%"
+                ></div>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <form id="quiz-form" novalidate>
+            {% for q in questions %}
+            <div class="question-card" id="question-{{ q.id }}" data-question-id="{{ q.id }}">
+                <div class="question-card__number">Question {{ loop.index }}</div>
+                <div class="question-card__text">{{ q.question | e }}</div>
+                <div class="quiz-options" role="radiogroup" aria-label="Options for question {{ loop.index }}">
+                    {% for option in q.options %}
+                    <label
+                        class="quiz-option"
+                        tabindex="0"
+                        role="radio"
+                        aria-checked="false"
+                        data-question-id="{{ q.id }}"
+                        data-option="{{ option | e }}"
+                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"
+                    >
+                        <span class="quiz-option__indicator" aria-hidden="true"></span>
+                        <span class="quiz-option__text">{{ option | e }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <!-- Explanation (shown after submission) -->
+                <div class="quiz-explanation" style="display: none;" aria-live="polite"></div>
+            </div>
+            {% endfor %}
+
+            <!-- Submit Button -->
+            <div style="text-align: center; margin-top: var(--space-6);">
+                <button type="submit" id="quiz-submit-btn" class="btn btn-primary btn-lg" disabled>
+                    Submit Quiz
+                </button>
+            </div>
+        </form>
+
+        <!-- Results (shown after submission) -->
+        <div id="quiz-result" class="quiz-result" style="display: none;" aria-live="polite">
+            <div class="quiz-result__score" id="quiz-score"></div>
+            <div class="quiz-result__label" id="quiz-result-label"></div>
+            <a href="/courses/{{ course.id }}" class="btn btn-primary">Back to Course</a>
+        </div>
+
+        {% else %}
+        <!-- No questions -->
+        <div class="card card-flat" style="text-align: center; padding: var(--space-10);">
+            <div style="font-size: 3rem; margin-bottom: var(--space-4);" aria-hidden="true">📝</div>
+            <h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--space-2);">
+                No quiz questions yet
+            </h3>
+            <p style="color: var(--color-text-muted); margin-bottom: var(--space-6);">
+                Quiz questions haven't been added to this module.
+            </p>
+            <a href="/courses/{{ course.id }}" class="btn btn-primary">Back to Course</a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+onDOMReady(function () {
+    var form = document.getElementById('quiz-form');
+    if (!form) return;
+
+    var totalQuestions = {{ questions | length }};
+    var answers = {};  /* questionId -> selectedAnswer */
+    var submitted = false;
+
+    var submitBtn = document.getElementById('quiz-submit-btn');
+    var answeredSpan = document.getElementById('quiz-answered');
+    var progressBar = document.getElementById('quiz-progress-bar');
+
+    /* --- Option selection --- */
+    var allOptions = document.querySelectorAll('.quiz-option');
+    allOptions.forEach(function (option) {
+        option.addEventListener('click', function () {
+            if (submitted) return;
+
+            var qId = option.dataset.questionId;
+            var selectedValue = option.dataset.option;
+
+            /* Deselect siblings */
+            var siblings = document.querySelectorAll('.quiz-option[data-question-id="' + qId + '"]');
+            siblings.forEach(function (s) {
+                s.classList.remove('selected');
+                s.setAttribute('aria-checked', 'false');
+            });
+
+            /* Select this one */
+            option.classList.add('selected');
+            option.setAttribute('aria-checked', 'true');
+            answers[qId] = selectedValue;
+
+            /* Update progress */
+            var answeredCount = Object.keys(answers).length;
+            answeredSpan.textContent = answeredCount;
+            var pct = Math.round((answeredCount / totalQuestions) * 100);
+            progressBar.style.width = pct + '%';
+            progressBar.setAttribute('aria-valuenow', String(pct));
+
+            /* Enable submit when all answered */
+            submitBtn.disabled = answeredCount < totalQuestions;
+        });
+    });
+
+    /* --- Quiz submission --- */
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (submitted) return;
+        if (Object.keys(answers).length < totalQuestions) {
+            showToast('Please answer all questions before submitting.', 'warning');
+            return;
+        }
+
+        submitted = true;
+        setBtnLoading(submitBtn, 'Submitting…');
+
+        /* Disable all option clicks */
+        allOptions.forEach(function (opt) {
+            opt.style.cursor = 'default';
+        });
+
+        var correctCount = 0;
+        var questionIds = Object.keys(answers);
+
+        /* Submit each answer and collect results */
+        for (var i = 0; i < questionIds.length; i++) {
+            var qId = questionIds[i];
+            var selectedAnswer = answers[qId];
+
+            try {
+                var result = await apiFetch('/api/v1/progress/quiz', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        quiz_question_id: qId,
+                        selected_answer: selectedAnswer,
+                    }),
+                });
+
+                var card = document.getElementById('question-' + qId);
+                var options = card.querySelectorAll('.quiz-option');
+
+                options.forEach(function (opt) {
+                    var optValue = opt.dataset.option;
+                    if (result.is_correct && optValue === selectedAnswer) {
+                        opt.classList.add('correct');
+                    } else if (!result.is_correct && optValue === selectedAnswer) {
+                        opt.classList.add('incorrect');
+                    }
+                });
+
+                if (result.is_correct) {
+                    correctCount++;
+                }
+            } catch (err) {
+                /* Mark question as unanswered on error */
+                showToast('Error submitting question ' + (i + 1) + ': ' + (err.message || 'Unknown error'), 'danger');
+            }
+        }
+
+        /* Show results */
+        submitBtn.style.display = 'none';
+
+        var resultDiv = document.getElementById('quiz-result');
+        var scoreEl = document.getElementById('quiz-score');
+        var labelEl = document.getElementById('quiz-result-label');
+
+        scoreEl.textContent = correctCount + ' / ' + totalQuestions;
+
+        var pctScore = Math.round((correctCount / totalQuestions) * 100);
+        if (pctScore === 100) {
+            labelEl.textContent = 'Perfect score! 🎉';
+        } else if (pctScore >= 70) {
+            labelEl.textContent = 'Great job! You passed! 👏';
+        } else {
+            labelEl.textContent = 'Keep learning and try again! 💪';
+        }
+
+        resultDiv.style.display = '';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Course Catalog — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/learner.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- ============================================
+         Header
+    ============================================= -->
+    <header class="catalog-header">
+        <h1 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); margin-bottom: var(--space-2);">
+            Course Catalog
+        </h1>
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-base);">
+            Explore our courses and start learning today.
+        </p>
+    </header>
+
+    <!-- ============================================
+         Search & Filters
+    ============================================= -->
+    <div class="catalog-search">
+        <div class="input-group">
+            <span class="input-group__icon" aria-hidden="true">🔍</span>
+            <input
+                type="search"
+                id="catalog-search"
+                class="form-input"
+                placeholder="Search courses…"
+                aria-label="Search courses"
+            >
+        </div>
+    </div>
+
+    <div class="catalog-filters" role="group" aria-label="Filter by difficulty">
+        <span class="catalog-filter-label">Difficulty:</span>
+        <button class="filter-chip active" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter-chip" data-filter="beginner" aria-pressed="false">Beginner</button>
+        <button class="filter-chip" data-filter="intermediate" aria-pressed="false">Intermediate</button>
+        <button class="filter-chip" data-filter="advanced" aria-pressed="false">Advanced</button>
+    </div>
+
+    <!-- ============================================
+         Course Grid
+    ============================================= -->
+    {% if courses %}
+    <div class="catalog-grid" id="catalog-grid">
+        {% for course in courses %}
+        <div
+            class="card course-card"
+            data-difficulty="{{ course.difficulty }}"
+            data-title="{{ course.title | lower | e }}"
+            data-description="{{ course.description | lower | e }}"
+            data-tags="{{ course.tags | join(' ') | lower | e }}"
+        >
+            <div class="card__body">
+                <div class="course-card__difficulty">
+                    <span class="badge badge-{{ course.difficulty }}">{{ course.difficulty | capitalize }}</span>
+                </div>
+                <h2 class="course-card__title">
+                    <a href="/courses/{{ course.id }}">{{ course.title | e }}</a>
+                </h2>
+                <p class="course-card__description">{{ course.description | e }}</p>
+
+                {% if course.tags %}
+                <div class="card__tags">
+                    {% for tag in course.tags %}
+                    <span class="badge badge-neutral">{{ tag | e }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="course-card__stats">
+                    <span class="course-card__stat">
+                        <span aria-hidden="true">⏱️</span>
+                        {{ course.estimated_duration }} min
+                    </span>
+                </div>
+            </div>
+            <div class="card__footer">
+                <a href="/courses/{{ course.id }}" class="btn btn-primary btn-sm">View Course</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- No results message (hidden by default) -->
+    <div id="catalog-empty" style="display: none; text-align: center; padding: var(--space-10) var(--space-6);">
+        <div style="font-size: 3rem; margin-bottom: var(--space-4);" aria-hidden="true">🔍</div>
+        <h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--space-2);">
+            No courses found
+        </h3>
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">
+            Try adjusting your search or filters.
+        </p>
+    </div>
+
+    {% else %}
+    <!-- Truly empty catalog -->
+    <div style="text-align: center; padding: var(--space-10) var(--space-6);">
+        <div style="font-size: 3rem; margin-bottom: var(--space-4);" aria-hidden="true">📚</div>
+        <h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); margin-bottom: var(--space-2);">
+            No courses available yet
+        </h3>
+        <p style="color: var(--color-text-muted); font-size: var(--font-size-sm);">
+            Check back soon — new courses are being added.
+        </p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+onDOMReady(function () {
+    var searchInput = document.getElementById('catalog-search');
+    var filterChips = document.querySelectorAll('.filter-chip');
+    var grid = document.getElementById('catalog-grid');
+    var emptyMsg = document.getElementById('catalog-empty');
+
+    if (!grid) return; /* No courses rendered */
+
+    var cards = Array.from(grid.querySelectorAll('.course-card'));
+    var activeFilter = 'all';
+
+    function applyFilters() {
+        var query = (searchInput.value || '').toLowerCase().trim();
+        var visibleCount = 0;
+
+        cards.forEach(function (card) {
+            var matchesDifficulty = activeFilter === 'all' || card.dataset.difficulty === activeFilter;
+            var matchesSearch = !query
+                || card.dataset.title.indexOf(query) !== -1
+                || card.dataset.description.indexOf(query) !== -1
+                || card.dataset.tags.indexOf(query) !== -1;
+
+            if (matchesDifficulty && matchesSearch) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (emptyMsg) {
+            emptyMsg.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
+    /* Search input */
+    searchInput.addEventListener('input', debounce(applyFilters, 200));
+
+    /* Difficulty filter chips */
+    filterChips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            filterChips.forEach(function (c) {
+                c.classList.remove('active');
+                c.setAttribute('aria-pressed', 'false');
+            });
+            chip.classList.add('active');
+            chip.setAttribute('aria-pressed', 'true');
+            activeFilter = chip.dataset.filter;
+            applyFilters();
+        });
+    });
+});
+</script>
+{% endblock %}

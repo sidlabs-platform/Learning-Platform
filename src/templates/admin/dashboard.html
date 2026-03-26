@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: var(--space-8) var(--space-4);">
+
+    <!-- Page header -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--space-4); margin-bottom:var(--space-8);">
+        <div>
+            <h1 style="font-size:var(--font-size-3xl); font-weight:var(--font-weight-bold); margin:0;">
+                📊 Admin Dashboard
+            </h1>
+            <p style="color:var(--color-text-secondary); margin-top:var(--space-2); font-size:var(--font-size-base);">
+                Platform overview and reporting
+            </p>
+        </div>
+        <div class="export-controls">
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('enrollments')" id="btn-export-enrollments">
+                📥 Export Enrollments
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="exportCSV('learner_progress')" id="btn-export-progress">
+                📥 Export Learner Progress
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="admin-stats">
+        <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">👥</span>
+            <span class="stat-card__label">Total Learners</span>
+            <span class="stat-card__value">{{ dashboard.total_users }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">📚</span>
+            <span class="stat-card__label">Total Courses</span>
+            <span class="stat-card__value">{{ dashboard.total_courses }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">📝</span>
+            <span class="stat-card__label">Total Enrollments</span>
+            <span class="stat-card__value">{{ dashboard.total_enrollments }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-card__icon" aria-hidden="true">🎯</span>
+            <span class="stat-card__label">Completion Rate</span>
+            <span class="stat-card__value">{{ "%.1f" | format(dashboard.overall_completion_rate) }}%</span>
+            <div class="progress progress-sm" style="margin-top:var(--space-2);">
+                <div class="progress-bar success"
+                     role="progressbar"
+                     aria-valuenow="{{ dashboard.overall_completion_rate | int }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100"
+                     style="width:{{ dashboard.overall_completion_rate }}%">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enrollment Stats Table -->
+    <div class="report-card" style="margin-bottom:var(--space-6);">
+        <h2 class="report-card__title">📈 Enrollment Statistics by Course</h2>
+        {% if dashboard.enrollment_stats %}
+        <div class="table-wrapper">
+            <table class="table" aria-label="Enrollment statistics per course">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th style="text-align:right;">Enrollments</th>
+                        <th style="text-align:right;">Completed</th>
+                        <th style="text-align:right;">In Progress</th>
+                        <th style="text-align:right;">Not Started</th>
+                        <th style="text-align:right;">Completion Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in dashboard.enrollment_stats %}
+                    <tr>
+                        <td>
+                            <span style="font-weight:var(--font-weight-medium);">{{ stat.course_title | e }}</span>
+                        </td>
+                        <td style="text-align:right;">{{ stat.total_enrollments }}</td>
+                        <td style="text-align:right;">
+                            <span class="badge badge-success">{{ stat.completed }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span class="badge badge-primary">{{ stat.in_progress }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span class="badge badge-neutral">{{ stat.not_started }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:flex; align-items:center; gap:var(--space-2); justify-content:flex-end;">
+                                <div class="progress progress-sm" style="width:80px;">
+                                    <div class="progress-bar success"
+                                         role="progressbar"
+                                         aria-valuenow="{{ stat.completion_rate | int }}"
+                                         aria-valuemin="0"
+                                         aria-valuemax="100"
+                                         style="width:{{ stat.completion_rate }}%">
+                                    </div>
+                                </div>
+                                <span style="font-size:var(--font-size-xs); font-weight:var(--font-weight-medium); min-width:3rem; text-align:right;">
+                                    {{ "%.1f" | format(stat.completion_rate) }}%
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:var(--space-10); color:var(--color-text-muted);">
+            <p style="font-size:var(--font-size-lg);">📭 No enrollment data yet</p>
+            <p>Enrollment statistics will appear here once learners start enrolling in courses.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Top Learners Table -->
+    <div class="report-card">
+        <h2 class="report-card__title">🏆 Top Learners</h2>
+        {% if dashboard.top_learners %}
+        <div class="table-wrapper">
+            <table class="table" aria-label="Top learners by activity">
+                <thead>
+                    <tr>
+                        <th>Learner</th>
+                        <th>Email</th>
+                        <th style="text-align:right;">Enrollments</th>
+                        <th style="text-align:right;">Completed</th>
+                        <th style="text-align:right;">In Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for learner in dashboard.top_learners %}
+                    <tr>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:var(--space-2);">
+                                <span style="display:inline-flex; align-items:center; justify-content:center; width:2rem; height:2rem; border-radius:var(--radius-full); background:var(--color-primary-light); color:var(--color-primary); font-weight:var(--font-weight-semibold); font-size:var(--font-size-sm);">
+                                    {{ learner.user_name[0] | upper }}
+                                </span>
+                                <span style="font-weight:var(--font-weight-medium);">{{ learner.user_name | e }}</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--color-text-secondary);">{{ learner.user_email | e }}</td>
+                        <td style="text-align:right;">{{ learner.enrollments }}</td>
+                        <td style="text-align:right;">
+                            <span class="badge badge-success">{{ learner.completed_courses }}</span>
+                        </td>
+                        <td style="text-align:right;">
+                            <span class="badge badge-primary">{{ learner.in_progress_courses }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:var(--space-10); color:var(--color-text-muted);">
+            <p style="font-size:var(--font-size-lg);">👤 No learner data yet</p>
+            <p>Top learners will appear here once learners start making progress.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Export a CSV report by type and trigger a browser download.
+ * @param {'enrollments'|'learner_progress'} reportType
+ */
+async function exportCSV(reportType) {
+    const btnId = reportType === 'enrollments' ? 'btn-export-enrollments' : 'btn-export-progress';
+    const btn = document.getElementById(btnId);
+    setBtnLoading(btn, 'Exporting…');
+
+    try {
+        const response = await fetch('/api/v1/reports/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'text/csv' },
+            body: JSON.stringify({ report_type: reportType }),
+        });
+
+        if (!response.ok) {
+            let detail = 'Export failed';
+            try {
+                const err = await response.json();
+                detail = err.detail || detail;
+            } catch (_) {}
+            throw new Error(detail);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = reportType + '_report.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast('Report downloaded successfully!', 'success');
+    } catch (err) {
+        showToast(err.message || 'Failed to export report.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+}
+</script>
+{% endblock %}

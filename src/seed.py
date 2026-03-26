@@ -727,7 +727,6 @@ async def main() -> None:
                 estimated_duration=course_data["estimated_duration"],
                 tags=course_data["tags"],
                 created_by=admin_user.id,
-                is_ai_generated=False,
             )
             db.add(course)
             await db.flush()  # get course.id
@@ -737,6 +736,7 @@ async def main() -> None:
                     id=str(uuid.uuid4()),
                     course_id=course.id,
                     title=mod_data["title"],
+                    summary=mod_data.get("summary", f"Module covering {mod_data['title']}"),
                     sort_order=mod_data["sort_order"],
                 )
                 db.add(module)

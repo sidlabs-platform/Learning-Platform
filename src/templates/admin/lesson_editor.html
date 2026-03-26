@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Lesson: {{ lesson.title | e }} — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/admin.css">
+<style>
+    .editor-layout {
+        display: grid;
+        gap: var(--space-6);
+    }
+    @media (min-width: 1024px) {
+        .editor-layout {
+            grid-template-columns: 1fr 1fr;
+            align-items: start;
+        }
+    }
+    .markdown-editor {
+        font-family: var(--font-family-mono);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-relaxed);
+        min-height: 500px;
+        resize: vertical;
+        tab-size: 4;
+    }
+    .preview-panel {
+        background: var(--color-surface);
+        border: var(--border);
+        border-radius: var(--radius-md);
+        padding: var(--space-6);
+        min-height: 500px;
+        overflow-y: auto;
+    }
+    .preview-panel h1, .preview-panel h2, .preview-panel h3,
+    .preview-panel h4, .preview-panel h5, .preview-panel h6 {
+        margin-top: 1.2em;
+        margin-bottom: 0.5em;
+        font-weight: var(--font-weight-semibold);
+    }
+    .preview-panel h1 { font-size: var(--font-size-3xl); }
+    .preview-panel h2 { font-size: var(--font-size-2xl); }
+    .preview-panel h3 { font-size: var(--font-size-xl); }
+    .preview-panel p { margin-bottom: 1em; line-height: var(--line-height-relaxed); }
+    .preview-panel ul, .preview-panel ol { margin-bottom: 1em; padding-left: 1.5em; list-style: revert; }
+    .preview-panel li { margin-bottom: 0.3em; }
+    .preview-panel code {
+        background: var(--color-gray-100);
+        padding: 0.15em 0.4em;
+        border-radius: var(--radius-sm);
+        font-size: 0.9em;
+        font-family: var(--font-family-mono);
+    }
+    .preview-panel pre {
+        background: var(--color-gray-800);
+        color: var(--color-gray-100);
+        padding: var(--space-4);
+        border-radius: var(--radius-base);
+        overflow-x: auto;
+        margin-bottom: 1em;
+    }
+    .preview-panel pre code {
+        background: transparent;
+        color: inherit;
+        padding: 0;
+    }
+    .preview-panel blockquote {
+        border-left: 4px solid var(--color-primary);
+        padding: var(--space-3) var(--space-4);
+        background: var(--color-primary-light);
+        margin: 1em 0;
+        border-radius: 0 var(--radius-base) var(--radius-base) 0;
+    }
+    .preview-panel hr {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: 2em 0;
+    }
+    .preview-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 200px;
+        color: var(--color-text-muted);
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: var(--space-8) var(--space-4);">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="Breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb__item"><a href="/admin" class="breadcrumb__link">Admin</a></li>
+            <li class="breadcrumb__item"><a href="/admin/courses" class="breadcrumb__link">Courses</a></li>
+            {% if course %}
+            <li class="breadcrumb__item">
+                <a href="/admin/courses/{{ course.id }}/edit" class="breadcrumb__link">{{ course.title | e | truncate(30) }}</a>
+            </li>
+            {% endif %}
+            <li class="breadcrumb__item"><span class="breadcrumb__current">Edit Lesson</span></li>
+        </ol>
+    </nav>
+
+    <h1 style="font-size:var(--font-size-3xl); font-weight:var(--font-weight-bold); margin-bottom:var(--space-6);">
+        📝 Edit Lesson
+    </h1>
+
+    <!-- Lesson metadata form -->
+    <div class="card" style="margin-bottom:var(--space-6);">
+        <div class="card__body">
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label for="lesson-title" class="form-label form-label-required">Lesson Title</label>
+                    <input type="text"
+                           id="lesson-title"
+                           class="form-input"
+                           value="{{ lesson.title | e }}"
+                           required
+                           maxlength="500">
+                </div>
+                <div class="form-group">
+                    <label for="lesson-minutes" class="form-label">Estimated Minutes</label>
+                    <input type="number"
+                           id="lesson-minutes"
+                           class="form-input"
+                           value="{{ lesson.estimated_minutes }}"
+                           min="1">
+                </div>
+                <div class="form-group">
+                    <label for="lesson-sort-order" class="form-label">Sort Order</label>
+                    <input type="number"
+                           id="lesson-sort-order"
+                           class="form-input"
+                           value="{{ lesson.sort_order }}"
+                           min="0">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor + Preview layout -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+        <h2 style="font-size:var(--font-size-xl); font-weight:var(--font-weight-semibold);">
+            Content Editor
+        </h2>
+        <div style="display:flex; gap:var(--space-3);">
+            <button class="btn btn-primary" id="save-lesson-btn" onclick="saveLesson()">
+                💾 Save Lesson
+            </button>
+            {% if course %}
+            <a href="/admin/courses/{{ course.id }}/edit" class="btn btn-secondary">
+                Back to Course
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="editor-layout">
+        <!-- Markdown input -->
+        <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-2);">
+                <label for="markdown-content" class="form-label" style="margin:0;">Markdown</label>
+                <span class="char-counter" id="char-counter">0 characters</span>
+            </div>
+            <textarea id="markdown-content"
+                      class="form-textarea markdown-editor"
+                      placeholder="Write your lesson content in Markdown…
+
+# Heading 1
+## Heading 2
+
+Regular paragraph text with **bold** and *italic*.
+
+- Bullet list item
+- Another item
+
+1. Numbered list
+2. Second item
+
+```python
+print('Hello, world!')
+```
+
+> Blockquote for important notes"
+            >{{ lesson.markdown_content | e }}</textarea>
+        </div>
+
+        <!-- Live preview -->
+        <div>
+            <div style="display:flex; align-items:center; margin-bottom:var(--space-2);">
+                <span class="form-label" style="margin:0;">Preview</span>
+            </div>
+            <div class="preview-panel" id="preview-panel">
+                <div class="preview-empty">Start typing to see a preview…</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const lessonId = "{{ lesson.id }}";
+const moduleId = "{{ module.id if module else '' }}";
+const courseId = "{{ course.id if course else '' }}";
+
+const textarea = document.getElementById('markdown-content');
+const preview = document.getElementById('preview-panel');
+const charCounter = document.getElementById('char-counter');
+
+/**
+ * Simple markdown-to-HTML renderer for live preview.
+ * Handles headings, bold, italic, code blocks, inline code,
+ * lists, blockquotes, horizontal rules, and links.
+ */
+function renderMarkdown(md) {
+    if (!md || !md.trim()) {
+        return '<div class="preview-empty">Start typing to see a preview…</div>';
+    }
+
+    var html = escapeHtml(md);
+
+    /* Fenced code blocks ```lang ... ``` */
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.trim() + '</code></pre>';
+    });
+
+    /* Inline code */
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+    /* Headings */
+    html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+    html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+
+    /* Bold & italic */
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+    /* Blockquotes */
+    html = html.replace(/^&gt;\s+(.+)$/gm, '<blockquote><p>$1</p></blockquote>');
+
+    /* Horizontal rules */
+    html = html.replace(/^---$/gm, '<hr>');
+
+    /* Unordered lists */
+    html = html.replace(/^[-*]\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+
+    /* Ordered lists */
+    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+    /* Links */
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
+
+    /* Paragraphs — wrap remaining loose lines */
+    html = html.replace(/^(?!<[hupob\-lr]|<\/|<li|<code|<pre|<blockquote)(.+)$/gm, '<p>$1</p>');
+
+    /* Clean up double line breaks */
+    html = html.replace(/\n{2,}/g, '\n');
+
+    return html;
+}
+
+/** Update the preview panel with rendered markdown. */
+function updatePreview() {
+    var md = textarea.value;
+    preview.innerHTML = renderMarkdown(md);
+    charCounter.textContent = md.length + ' characters';
+    if (md.length > 50000) {
+        charCounter.classList.add('at-limit');
+    } else if (md.length > 40000) {
+        charCounter.classList.add('near-limit');
+        charCounter.classList.remove('at-limit');
+    } else {
+        charCounter.classList.remove('near-limit', 'at-limit');
+    }
+}
+
+/* Debounced preview update */
+var debouncedPreview = debounce(updatePreview, 200);
+textarea.addEventListener('input', debouncedPreview);
+
+/* Initial render */
+onDOMReady(updatePreview);
+
+/** Save lesson via API. */
+async function saveLesson() {
+    var title = document.getElementById('lesson-title').value.trim();
+    var minutes = parseInt(document.getElementById('lesson-minutes').value) || 10;
+    var sortOrder = parseInt(document.getElementById('lesson-sort-order').value) || 0;
+    var content = textarea.value;
+
+    if (!title) {
+        showToast('Lesson title is required.', 'warning');
+        return;
+    }
+
+    var btn = document.getElementById('save-lesson-btn');
+    setBtnLoading(btn, 'Saving…');
+
+    try {
+        /* Use the lesson GET endpoint structure to determine the PATCH URL pattern */
+        var url = '/api/v1/courses/' + courseId + '/modules/' + moduleId + '/lessons/' + lessonId;
+        await apiFetch(url, {
+            method: 'PATCH',
+            body: JSON.stringify({
+                title: title,
+                estimated_minutes: minutes,
+                sort_order: sortOrder,
+                markdown_content: content,
+            }),
+        });
+        showToast('Lesson saved successfully!', 'success');
+    } catch (err) {
+        showToast(err.message || 'Failed to save lesson.', 'danger');
+    } finally {
+        setBtnReady(btn);
+    }
+}
+
+/* Keyboard shortcut: Ctrl+S to save */
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveLesson();
+    }
+});
+
+/* Tab key inserts spaces in textarea */
+textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        var start = this.selectionStart;
+        var end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+        debouncedPreview();
+    }
+});
+</script>
+{% endblock %}
