@@ -37,5 +37,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
+        # Note: the async context manager (``async with AsyncSessionLocal()``)
+        # automatically closes the session on exit — no explicit close needed.
