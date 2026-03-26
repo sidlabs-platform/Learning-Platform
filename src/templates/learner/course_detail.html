@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title | e }} — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/learner.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- ============================================
+         Hero Section
+    ============================================= -->
+    <div class="course-detail-hero">
+        <div class="course-detail-hero__header">
+            <span class="course-detail-hero__emoji" aria-hidden="true">📘</span>
+            <div>
+                <h1 class="course-detail-hero__title">{{ course.title | e }}</h1>
+                <p style="color: var(--color-text-secondary); font-size: var(--font-size-base); line-height: var(--line-height-relaxed); margin-bottom: var(--space-3);">
+                    {{ course.description | e }}
+                </p>
+
+                <div class="course-detail-hero__meta">
+                    <span class="badge badge-{{ course.difficulty }}">{{ course.difficulty | capitalize }}</span>
+                    <span>⏱️ {{ course.estimated_duration }} min</span>
+                    {% set ns = namespace(count=0) %}
+                    {% for m in modules %}{% set ns.count = ns.count + m.lessons | length %}{% endfor %}
+                    <span>📖 {{ ns.count }} lesson{{ 's' if ns.count != 1 else '' }}</span>
+                </div>
+
+                {% if course.tags %}
+                <div class="course-detail-hero__tags">
+                    {% for tag in course.tags %}
+                    <span class="badge badge-neutral">{{ tag | e }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Enrollment / Progress bar -->
+        {% if enrollment %}
+        <div style="margin-top: var(--space-4);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2);">
+                <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-secondary);">
+                    Your Progress
+                </span>
+                <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-secondary);">
+                    {{ progress.progress_percentage | round | int }}%
+                    · {{ progress.completed_lessons }}/{{ progress.total_lessons }} lessons
+                </span>
+            </div>
+            <div class="progress progress-lg">
+                <div
+                    class="progress-bar{% if progress.progress_percentage >= 100 %} success{% endif %}"
+                    role="progressbar"
+                    aria-valuenow="{{ progress.progress_percentage | round | int }}"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    style="width: {{ progress.progress_percentage | round | int }}%"
+                ></div>
+            </div>
+            {% set ns2 = namespace(first_lesson=None) %}
+            {% for m in modules %}
+                {% for l in m.lessons %}
+                    {% if not progress_map.get(l.id, false) and ns2.first_lesson is none %}
+                        {% set ns2.first_lesson = l %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            <div style="margin-top: var(--space-4); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                {% if ns2.first_lesson %}
+                <a href="/courses/{{ course.id }}/lessons/{{ ns2.first_lesson.id }}" class="btn btn-primary">
+                    {% if progress.progress_percentage > 0 %}Continue Learning{% else %}Start Course{% endif %}
+                </a>
+                {% elif progress.progress_percentage >= 100 %}
+                <span class="badge badge-success" style="font-size: var(--font-size-sm); padding: var(--space-2) var(--space-3);">
+                    ✅ Course Completed!
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- Not enrolled -->
+        <div style="margin-top: var(--space-4);">
+            <button
+                type="button"
+                id="enroll-btn"
+                class="btn btn-primary btn-lg"
+                data-course-id="{{ course.id }}"
+            >
+                Enroll in This Course
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================
+         Course Outline
+    ============================================= -->
+    <section>
+        <h2 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); margin-bottom: var(--space-4);">
+            Course Outline
+        </h2>
+
+        {% if modules %}
+        <div class="course-outline">
+            {% for module in modules %}
+            <div class="course-outline__module">
+                <div
+                    class="course-outline__module-header"
+                    role="button"
+                    tabindex="0"
+                    aria-expanded="true"
+                    aria-controls="module-{{ module.id }}"
+                    onclick="toggleModule(this)"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleModule(this)}"
+                >
+                    <span>
+                        <strong>Module {{ loop.index }}:</strong> {{ module.title | e }}
+                        <span style="color: var(--color-text-muted); font-weight: var(--font-weight-normal);">
+                            — {{ module.lessons | length }} lesson{{ 's' if module.lessons | length != 1 else '' }}
+                        </span>
+                    </span>
+                    <span class="module-chevron" aria-hidden="true" style="transition: transform 0.2s ease;">▼</span>
+                </div>
+                <ul class="course-outline__lessons" id="module-{{ module.id }}">
+                    {% for lesson in module.lessons %}
+                    <li class="course-outline__lesson">
+                        <span class="lesson-check{% if progress_map.get(lesson.id, false) %} completed{% endif %}" aria-label="{{ 'Completed' if progress_map.get(lesson.id, false) else 'Not completed' }}">
+                            {% if progress_map.get(lesson.id, false) %}✓{% endif %}
+                        </span>
+                        {% if enrollment %}
+                        <a href="/courses/{{ course.id }}/lessons/{{ lesson.id }}">{{ lesson.title | e }}</a>
+                        {% else %}
+                        <span style="flex: 1; color: var(--color-text-secondary);">{{ lesson.title | e }}</span>
+                        {% endif %}
+                        <span style="font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap;">
+                            {{ lesson.estimated_minutes }} min
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                {% if module.quiz_questions %}
+                <div class="course-outline__lesson" style="background: var(--color-gray-50);">
+                    <span aria-hidden="true">📝</span>
+                    {% if enrollment %}
+                    <a href="/courses/{{ course.id }}/modules/{{ module.id }}/quiz" style="font-weight: var(--font-weight-medium);">
+                        Module Quiz — {{ module.quiz_questions | length }} question{{ 's' if module.quiz_questions | length != 1 else '' }}
+                    </a>
+                    {% else %}
+                    <span style="flex: 1; color: var(--color-text-secondary); font-weight: var(--font-weight-medium);">
+                        Module Quiz — {{ module.quiz_questions | length }} question{{ 's' if module.quiz_questions | length != 1 else '' }}
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card card-flat" style="text-align: center; padding: var(--space-8);">
+            <p style="color: var(--color-text-muted);">No modules have been added to this course yet.</p>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * Toggle a module's lesson list open/closed.
+ * @param {HTMLElement} header - The module header element.
+ */
+function toggleModule(header) {
+    var targetId = header.getAttribute('aria-controls');
+    var target = document.getElementById(targetId);
+    var expanded = header.getAttribute('aria-expanded') === 'true';
+    var chevron = header.querySelector('.module-chevron');
+
+    header.setAttribute('aria-expanded', String(!expanded));
+    target.style.display = expanded ? 'none' : '';
+    if (chevron) {
+        chevron.style.transform = expanded ? 'rotate(-90deg)' : 'rotate(0deg)';
+    }
+}
+
+onDOMReady(function () {
+    /* Enroll button */
+    var enrollBtn = document.getElementById('enroll-btn');
+    if (enrollBtn) {
+        enrollBtn.addEventListener('click', async function () {
+            var courseId = enrollBtn.dataset.courseId;
+            setBtnLoading(enrollBtn, 'Enrolling…');
+
+            try {
+                await apiFetch('/api/v1/progress/enroll', {
+                    method: 'POST',
+                    body: JSON.stringify({ course_id: courseId }),
+                });
+                showToast('Successfully enrolled! Refreshing…', 'success');
+                setTimeout(function () {
+                    window.location.reload();
+                }, 800);
+            } catch (err) {
+                showToast(err.message || 'Failed to enroll. Please try again.', 'danger');
+                setBtnReady(enrollBtn);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

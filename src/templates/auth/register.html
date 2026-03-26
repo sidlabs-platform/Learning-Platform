@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — Learning Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 12rem);
+        padding: var(--space-6) var(--space-4);
+    }
+    .auth-card {
+        width: 100%;
+        max-width: 420px;
+    }
+    .auth-card__header {
+        text-align: center;
+        margin-bottom: var(--space-6);
+    }
+    .auth-card__icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--space-3);
+    }
+    .auth-card__title {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-2);
+    }
+    .auth-card__subtitle {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+    }
+    .auth-card__footer {
+        text-align: center;
+        margin-top: var(--space-5);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+    }
+    .auth-card__footer a {
+        color: var(--color-primary);
+        font-weight: var(--font-weight-medium);
+        text-decoration: none;
+    }
+    .auth-card__footer a:hover {
+        text-decoration: underline;
+    }
+    .auth-error {
+        background: var(--color-danger-light);
+        color: var(--color-danger-dark);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-base);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--space-4);
+        display: none;
+    }
+    .auth-error.visible {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card card">
+        <div class="card__body">
+            <div class="auth-card__header">
+                <div class="auth-card__icon" aria-hidden="true">🚀</div>
+                <h1 class="auth-card__title">Create your account</h1>
+                <p class="auth-card__subtitle">Start your learning journey today</p>
+            </div>
+
+            <div id="register-error" class="auth-error" role="alert" aria-live="assertive"></div>
+
+            <form id="register-form" novalidate>
+                <div class="form-group">
+                    <label for="name" class="form-label form-label-required">Full name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="form-input"
+                        placeholder="Jane Doe"
+                        autocomplete="name"
+                        required
+                        aria-required="true"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="form-label form-label-required">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="form-input"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                        aria-required="true"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label form-label-required">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        placeholder="At least 6 characters"
+                        autocomplete="new-password"
+                        minlength="6"
+                        required
+                        aria-required="true"
+                    >
+                    <p class="form-hint">Use at least 6 characters with a mix of letters and numbers.</p>
+                </div>
+
+                <button type="submit" id="register-btn" class="btn btn-primary btn-block btn-lg">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-card__footer">
+                Already have an account?
+                <a href="/auth/login">Sign in</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+onDOMReady(function () {
+    var form = document.getElementById('register-form');
+    var errorBox = document.getElementById('register-error');
+    var btn = document.getElementById('register-btn');
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        clearFormErrors(form);
+        errorBox.classList.remove('visible');
+        errorBox.textContent = '';
+
+        var name = form.name.value.trim();
+        var email = form.email.value.trim();
+        var password = form.password.value;
+
+        /* Client-side validation */
+        var valid = true;
+        if (!name) {
+            showFieldError(form.name, 'Name is required');
+            valid = false;
+        }
+        if (!email) {
+            showFieldError(form.email, 'Email is required');
+            valid = false;
+        }
+        if (!password || password.length < 6) {
+            showFieldError(form.password, 'Password must be at least 6 characters');
+            valid = false;
+        }
+        if (!valid) return;
+
+        setBtnLoading(btn, 'Creating account…');
+
+        try {
+            await apiFetch('/api/v1/auth/register', {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    password: password,
+                    role: 'learner',
+                }),
+            });
+            /* Redirect to login with success message */
+            window.location.href = '/auth/login?success=Account+created+successfully.+Please+sign+in.';
+        } catch (err) {
+            errorBox.textContent = err.message || 'Registration failed. Please try again.';
+            errorBox.classList.add('visible');
+            setBtnReady(btn);
+        }
+    });
+});
+</script>
+{% endblock %}
