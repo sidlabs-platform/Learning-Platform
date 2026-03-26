@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import Enrollment, Lesson, Module, ProgressRecord
 from src.progress.schemas import CourseProgressSummary, EnrollmentStatus
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ async def record_lesson_view(
 
     await db.flush()
     await db.refresh(record)
-    logger.info("Recorded lesson view for user %s, lesson %s", user_id, lesson_id)
+    logger.info("Recorded lesson view for user %s, lesson %s", sanitize_log(user_id), sanitize_log(lesson_id))
     return record
 
 
@@ -125,7 +126,7 @@ async def complete_lesson(
 
     await db.flush()
     await db.refresh(record)
-    logger.info("Completed lesson %s for user %s", lesson_id, user_id)
+    logger.info("Completed lesson %s for user %s", sanitize_log(lesson_id), sanitize_log(user_id))
     return record
 
 

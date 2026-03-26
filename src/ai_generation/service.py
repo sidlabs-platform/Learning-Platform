@@ -17,6 +17,7 @@ from src.ai_generation.prompt_service import get_available_templates, render_pro
 from src.ai_generation.schemas import GenerationRequest
 from src.database import AsyncSessionLocal
 from src.models import ContentGenerationArtifact, ContentGenerationRequest
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ async def create_generation_request(
         # Fallback: build a simple prompt when the template is unavailable
         logger.warning(
             "PT-001 template unavailable – using fallback prompt for topic=%s",
-            gen_req.topic,
+            sanitize_log(gen_req.topic),
         )
         prompt_text = (
             f"Create a comprehensive course outline about '{gen_req.topic}' "
@@ -88,9 +89,9 @@ async def create_generation_request(
 
     logger.info(
         "Generation request created: request_id=%s requester=%s topic=%s",
-        request_id,
-        requester_id,
-        gen_req.topic,
+        sanitize_log(request_id),
+        sanitize_log(requester_id),
+        sanitize_log(gen_req.topic),
     )
 
     return record

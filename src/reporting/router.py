@@ -29,6 +29,7 @@ from src.reporting.service import (
     export_learner_progress_csv,
     get_admin_dashboard,
 )
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -96,8 +97,8 @@ async def export_csv(
     """
     logger.info(
         "CSV export requested: report_type=%s user=%s",
-        body.report_type.value,
-        current_user.id,
+        sanitize_log(body.report_type.value),
+        sanitize_log(current_user.id),
     )
 
     if body.report_type == ReportType.enrollments:

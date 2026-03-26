@@ -39,6 +39,7 @@ from src.progress.schemas import (
     QuizAttemptRead,
     QuizSubmission,
 )
+from src.sanitize import sanitize_log
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ async def enroll_in_course(
     )
     await db.commit()
     logger.info(
-        "User %s enrolled in course %s", current_user.id, body.course_id
+        "User %s enrolled in course %s", sanitize_log(current_user.id), sanitize_log(body.course_id)
     )
     return EnrollmentRead.model_validate(enrollment)
 
@@ -196,7 +197,7 @@ async def record_lesson_view_endpoint(
     )
     await db.commit()
     logger.info(
-        "User %s viewed lesson %s", current_user.id, lesson_id
+        "User %s viewed lesson %s", sanitize_log(current_user.id), sanitize_log(lesson_id)
     )
     return ProgressRecordRead.model_validate(record)
 
@@ -232,7 +233,7 @@ async def complete_lesson_endpoint(
     )
     await db.commit()
     logger.info(
-        "User %s completed lesson %s", current_user.id, lesson_id
+        "User %s completed lesson %s", sanitize_log(current_user.id), sanitize_log(lesson_id)
     )
     return ProgressRecordRead.model_validate(record)
 
@@ -371,8 +372,8 @@ async def submit_quiz_answer(
 
     logger.info(
         "User %s submitted quiz answer for question %s (correct=%s)",
-        current_user.id,
-        body.quiz_question_id,
+        sanitize_log(current_user.id),
+        sanitize_log(body.quiz_question_id),
         is_correct,
     )
     return QuizAttemptRead.model_validate(attempt)
