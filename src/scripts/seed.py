@@ -664,7 +664,7 @@ SEED_COURSES = [
                             "## How It Works\n\n"
                             "1. GitHub partners with 100+ service providers (AWS, Azure, GitHub, etc.).\n"
                             "2. When a commit is pushed, the content is scanned against known patterns.\n"
-                            "3. If a match is found, an alert is raised and the provider is optified.\n"
+                            "3. If a match is found, an alert is raised and the provider is notified.\n"
                             "4. The provider can immediately revoke the exposed credential.\n\n"
                             "## Push Protection\n\n"
                             "**Push protection** blocks pushes that contain secrets *before* they "
