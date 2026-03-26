@@ -235,10 +235,8 @@ async def lesson_viewer_page(
 
     lesson = await get_lesson(lesson_id, db)
     if lesson is None:
-        if not is_safe_id(course_id):
-            return RedirectResponse(url="/catalog?error=Invalid+course", status_code=302)
         return RedirectResponse(
-            url=f"/courses/{course_id}?error=Lesson+not+found",
+            url=f"/courses/{course.id}?error=Lesson+not+found",
             status_code=302,
         )
 
@@ -314,10 +312,8 @@ async def quiz_page(
 
     module = await get_module(module_id, db)
     if module is None:
-        if not is_safe_id(course_id):
-            return RedirectResponse(url="/catalog?error=Invalid+course", status_code=302)
         return RedirectResponse(
-            url=f"/courses/{course_id}?error=Module+not+found",
+            url=f"/courses/{course.id}?error=Module+not+found",
             status_code=302,
         )
 

@@ -48,7 +48,7 @@ def render_prompt(template_id: str, variables: dict[str, Any]) -> str:
             detail=f"Missing required variable for template '{template_id}': {exc}",
         ) from exc
 
-    logger.info("Prompt rendered: template_id=%s variable_keys=%s", sanitize_log(template_id), list(variables.keys()))
+    logger.info("Prompt rendered: template_id=%s variable_keys=%s", sanitize_log(template_id), sanitize_log(str(list(variables.keys()))))
     return rendered
 
 
