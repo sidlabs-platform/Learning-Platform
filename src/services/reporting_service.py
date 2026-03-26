@@ -171,7 +171,7 @@ async def get_dashboard_stats(db: AsyncSession) -> DashboardResponse:
     completed_enrollments: int = completed_result.scalar_one() or 0
 
     completion_rate = (
-        round(completed_enrollments / total_enrollments, 4) if total_enrollments else 0.0
+        round(completed_enrollments / total_enrollments, 4) if total_enrollments > 0 else 0.0
     )
 
     enrollment_stats = EnrollmentStats(

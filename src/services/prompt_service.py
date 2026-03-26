@@ -137,9 +137,17 @@ def render_section_regeneration_prompt(
     Args:
         request: A validated :class:`~src.schemas.ai_generation.RegenerateSectionRequest`
             describing which section to regenerate and any additional instructions.
-        context: A dictionary of extra template variables that vary by section
-            type (e.g. ``{"current_content": "..."}``).  Keys must match the
-            ``{placeholder}`` names in the template beyond the standard fields.
+        context: A dictionary of extra template variables required by the
+            ``pt005_section_regeneration`` template beyond the three standard
+            fields.  Callers **must** supply all placeholders referenced in the
+            template, e.g.::
+
+                context = {
+                    "course_title": "GitHub Actions",
+                    "module_title": "Workflows",
+                    "section_title": "Triggers",
+                    "original_content": "...",
+                }
 
     Returns:
         The fully rendered prompt string.
