@@ -35,3 +35,18 @@ def test_copilot_course_covers_auto_mode_and_hydrafusion() -> None:
     )
     for term in ("Auto", "Efficiency", "Balance", "Intelligence", "HydraFusion", "Cascade", "Critique"):
         assert term in content
+
+
+def test_hydrafusion_safety_and_client_eligibility() -> None:
+    """Keep preview safety guarantees and plan eligibility scoped accurately."""
+    course = next(c for c in COURSES if c["title"] == "GitHub Copilot")
+    overview = course["modules"][1]["lessons"][0]["markdown_content"]
+    setup = course["modules"][2]["lessons"][0]["markdown_content"]
+
+    assert "no patch is applied if a workflow is cancelled or fails validation" in overview
+    assert "all Copilot plans through Copilot CLI, including Free" in setup
+    assert (
+        "In VS Code and the GitHub Copilot app, it is available to Copilot Pro, Pro+, "
+        "Business, and Enterprise users"
+    ) in setup
+    assert "an administrator must allow preview features" in setup

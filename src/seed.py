@@ -767,7 +767,7 @@ COURSES = [
                             "- **Complete accounting** of cost across every workflow leg.\n"
                             "- **Bounded execution** with timeouts and cancellation per leg.\n"
                             "- **Isolated review** — critics run in read-only, tool-less contexts.\n"
-                            "- **Fail-safe application** — no patch is applied if a workflow fails or is cancelled.\n"
+                            "- **Fail-safe application** — no patch is applied if a workflow is cancelled or fails validation.\n"
                             "- **Validated routing** — model bindings and fallbacks are checked before execution.\n"
                         ),
                     },
@@ -833,8 +833,10 @@ COURSES = [
                         "estimated_minutes": 15,
                         "markdown_content": (
                             "## Turning On HydraFusion\n\n"
-                            "HydraFusion is available to Copilot Pro, Pro+, Business, and Enterprise users. For "
-                            "Business and Enterprise, an administrator must allow preview features.\n\n"
+                            "HydraFusion is available on all Copilot plans through Copilot CLI, including Free. "
+                            "In VS Code and the GitHub Copilot app, it is available to Copilot Pro, Pro+, "
+                            "Business, and Enterprise users. For Business and Enterprise, an administrator "
+                            "must allow preview features.\n\n"
                             "- **Copilot CLI**: enable experimental features with `/experimental on`, then pick "
                             "HydraFusion with `/model`.\n"
                             "- **VS Code** (1.140+ or Insiders): select **HydraFusion** in the Copilot Chat model "
