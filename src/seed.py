@@ -1,14 +1,15 @@
 """
 Database seed script for the Learning Platform MVP.
 
-Creates 3 starter courses (GitHub Foundations, GitHub Advanced Security,
-GitHub Actions) and 2 default users (admin + learner).
+Creates 4 starter courses (GitHub Foundations, GitHub Advanced Security,
+GitHub Actions, GitHub Copilot) and 2 default users (admin + learner).
 
 Usage::
 
     python -m src.seed
 
-The script is idempotent — if the admin user already exists it exits early.
+The script adds missing courses by title without replacing existing content.
+Existing users are left unchanged when the default admin already exists.
 """
 
 import asyncio
@@ -645,6 +646,235 @@ COURSES = [
             },
         ],
     },
+    {
+        "title": "GitHub Copilot",
+        "description": (
+            "Learn how GitHub Copilot chooses and combines AI models. This course covers "
+            "Auto model selection and its routing tiers, HydraFusion multi-model orchestration, "
+            "and practical guidance for picking the right mode for each task."
+        ),
+        "status": "published",
+        "difficulty": "intermediate",
+        "estimated_duration": 75,
+        "tags": ["github", "copilot", "ai", "models"],
+        "modules": [
+            {
+                "title": "Copilot Models and Auto Mode Routing",
+                "summary": "How Copilot Auto model selection routes each prompt and how routing tiers change its priorities.",
+                "sort_order": 1,
+                "lessons": [
+                    {
+                        "title": "How Auto Model Selection Works",
+                        "sort_order": 1,
+                        "estimated_minutes": 15,
+                        "markdown_content": (
+                            "## Why Auto?\n\n"
+                            "The model landscape changes quickly. Instead of choosing a model for every prompt, "
+                            "you can select **Auto** and let Copilot route each task to the model best suited "
+                            "to solve it.\n\n"
+                            "## Two Signals, One Decision\n\n"
+                            "Auto model selection with task optimization combines two systems:\n\n"
+                            "- **Task complexity** — how demanding is the prompt?\n"
+                            "- **Real-time system health** — which models are available and performing well right now?\n\n"
+                            "Straightforward tasks go to faster, lower-cost models, while higher-cost reasoning "
+                            "models are reserved for problems that truly need them. Routing decisions depend on "
+                            "what you are trying to do, not the language you ask in.\n\n"
+                            "## When Does Auto Switch Models?\n\n"
+                            "Routing happens along **natural cache boundaries** and when conversation complexity "
+                            "drifts significantly. This avoids extra cache costs from switching models without "
+                            "a quality benefit.\n\n"
+                            "## Policies and Billing\n\n"
+                            "- Auto only chooses models available in your plan and allowed by administrator policies.\n"
+                            "- Usage is charged for the model Auto actually selects.\n"
+                            "- Users on paid plans get a **10% discount** on model costs when using Auto.\n"
+                            "- You can see which model answered: hover over the response in Copilot Chat, or read "
+                            "it in the terminal in Copilot CLI.\n"
+                        ),
+                    },
+                    {
+                        "title": "Routing Tiers: Efficiency, Balance, Intelligence",
+                        "sort_order": 2,
+                        "estimated_minutes": 15,
+                        "markdown_content": (
+                            "## What Are Auto Tiers?\n\n"
+                            "Tiers adjust **how** Auto prefers models for each prompt. The same models remain "
+                            "available in every tier — only the routing objective changes.\n\n"
+                            "| Tier | Priority | Typical use |\n"
+                            "|------|----------|-------------|\n"
+                            "| **Efficiency** | Cost | Fast, straightforward tasks |\n"
+                            "| **Balance** | Cost, quality and latency | Everyday work |\n"
+                            "| **Intelligence** | Quality | Complex tasks |\n\n"
+                            "## How Each Tier Routes\n\n"
+                            "- **Efficiency** sends prompts to the most cost-efficient model that is still capable "
+                            "enough for the task.\n"
+                            "- **Balance** weighs cost, quality, and latency for each prompt.\n"
+                            "- **Intelligence** looks for the highest-quality response. A simple prompt may still "
+                            "go to a smaller model; a complex one goes to the most capable model.\n\n"
+                            "## Things to Remember\n\n"
+                            "- Auto still evaluates every prompt — a tier is a preference, not a fixed model.\n"
+                            "- Billing is based on the model selected, regardless of tier.\n"
+                            "- Tiers are available in VS Code, Copilot CLI, and the GitHub Copilot app.\n"
+                        ),
+                    },
+                ],
+                "quiz_questions": [
+                    {
+                        "question": "Which two signals does Auto model selection combine to route a prompt?",
+                        "options": [
+                            "Repository size and number of open pull requests",
+                            "Task complexity and real-time model health/availability",
+                            "Programming language and time of day",
+                            "User seniority and organisation size",
+                        ],
+                        "correct_answer": "Task complexity and real-time model health/availability",
+                        "explanation": "Auto pairs a task-complexity evaluation with real-time system health and availability to choose the optimal model.",
+                    },
+                    {
+                        "question": "What changes when you switch Auto from the Efficiency tier to the Intelligence tier?",
+                        "options": [
+                            "A different, smaller pool of models becomes available",
+                            "Every prompt is forced to the most expensive model",
+                            "The routing priority shifts from cost toward quality, using the same model pool",
+                            "Billing switches to a flat monthly rate",
+                        ],
+                        "correct_answer": "The routing priority shifts from cost toward quality, using the same model pool",
+                        "explanation": "All tiers share the same models; tiers only change how preferred models are selected. Even Intelligence may route simple prompts to smaller models.",
+                    },
+                ],
+            },
+            {
+                "title": "HydraFusion: Multi-Model Orchestration",
+                "summary": "How HydraFusion moves from picking one model to orchestrating several models within a turn.",
+                "sort_order": 2,
+                "lessons": [
+                    {
+                        "title": "From Model Selection to Orchestration",
+                        "sort_order": 1,
+                        "estimated_minutes": 15,
+                        "markdown_content": (
+                            "## What Is HydraFusion?\n\n"
+                            "HydraFusion is a **research preview** in GitHub Copilot. It appears in the model "
+                            "picker, but it is not a single model — it **orchestrates multiple models**, potentially "
+                            "from different providers, to complete your task.\n\n"
+                            "## Auto vs HydraFusion\n\n"
+                            "- **Auto** selects one model for each request.\n"
+                            "- **HydraFusion** selects a **workflow** and can coordinate several models within a "
+                            "single turn — drafting, critiquing, revising, or escalating.\n\n"
+                            "## Workflow Selection as Optimisation\n\n"
+                            "HydraFusion uses capability signals for reasoning, code generation, debugging, and "
+                            "tool use to pick the least complex workflow expected to meet the quality bar. Extra "
+                            "model calls are used only when they are likely to improve the result.\n\n"
+                            "## Operating Principles\n\n"
+                            "- **Complete accounting** of cost across every workflow leg.\n"
+                            "- **Bounded execution** with timeouts and cancellation per leg.\n"
+                            "- **Isolated review** — critics run in read-only, tool-less contexts.\n"
+                            "- **Fail-safe application** — no patch is applied if a workflow is cancelled or fails validation.\n"
+                            "- **Validated routing** — model bindings and fallbacks are checked before execution.\n"
+                        ),
+                    },
+                    {
+                        "title": "Single, Cascade and Critique Workflows",
+                        "sort_order": 2,
+                        "estimated_minutes": 15,
+                        "markdown_content": (
+                            "## The Three Execution Patterns\n\n"
+                            "For each request HydraFusion currently chooses one of three workflows:\n\n"
+                            "- **Single** — one selected model solves the task directly. Fastest and cheapest "
+                            "when one model is enough.\n"
+                            "- **Cascade** — an efficient model drafts a solution and a **quality gate** decides "
+                            "whether to accept it or **escalate** to a stronger model.\n"
+                            "- **Critique** — one model drafts, an independent **read-only critic from a different "
+                            "model family** reviews it, and the drafting model revises once.\n\n"
+                            "## Choosing a Trade-off\n\n"
+                            "Each pattern is a different quality-to-cost trade-off. Cascade gives a cheaper model "
+                            "the first attempt while keeping a path to stronger inference; Critique adds an "
+                            "independent perspective when review helps more than another unaided attempt.\n\n"
+                            "## Results and Billing\n\n"
+                            "In GitHub's offline benchmarks, HydraFusion reached frontier-level quality at "
+                            "substantially lower estimated cost (for example, 67% lower cost on TerminalBench 2.1 "
+                            "compared with a frontier baseline). These are controlled research results and may "
+                            "differ on real workloads.\n\n"
+                            "You are billed for the usage of each underlying model invoked during the workflow.\n"
+                        ),
+                    },
+                ],
+                "quiz_questions": [
+                    {
+                        "question": "In HydraFusion's Cascade workflow, what decides whether to escalate to a stronger model?",
+                        "options": [
+                            "The user manually approves each escalation",
+                            "A quality gate evaluating the efficient model's draft",
+                            "A fixed timer that always escalates after 30 seconds",
+                            "The repository's CODEOWNERS file",
+                        ],
+                        "correct_answer": "A quality gate evaluating the efficient model's draft",
+                        "explanation": "In Cascade, an efficient model drafts first and a quality gate accepts the draft or escalates to a stronger model.",
+                    },
+                    {
+                        "question": "What distinguishes the Critique workflow?",
+                        "options": [
+                            "Two models write competing answers and the user picks one",
+                            "The same model reviews its own answer repeatedly",
+                            "A read-only critic from a different model family reviews the draft, then the drafter revises once",
+                            "A human reviewer is automatically requested on a pull request",
+                        ],
+                        "correct_answer": "A read-only critic from a different model family reviews the draft, then the drafter revises once",
+                        "explanation": "Critique uses an independent, read-only critic from another model family to add review diversity before a single revision.",
+                    },
+                ],
+            },
+            {
+                "title": "Choosing the Right Mode in Practice",
+                "summary": "Enabling Auto tiers and HydraFusion, and deciding which mode fits a given task.",
+                "sort_order": 3,
+                "lessons": [
+                    {
+                        "title": "Enabling and Choosing a Mode",
+                        "sort_order": 1,
+                        "estimated_minutes": 15,
+                        "markdown_content": (
+                            "## Turning On HydraFusion\n\n"
+                            "HydraFusion is available on all Copilot plans through Copilot CLI, including Free. "
+                            "In VS Code and the GitHub Copilot app, it is available to Copilot Pro, Pro+, "
+                            "Business, and Enterprise users. For Business and Enterprise, an administrator "
+                            "must allow preview features.\n\n"
+                            "- **Copilot CLI**: enable experimental features with `/experimental on`, then pick "
+                            "HydraFusion with `/model`.\n"
+                            "- **VS Code** (1.140+ or Insiders): select **HydraFusion** in the Copilot Chat model "
+                            "picker; if missing, enable `chat.copilot.hydraFusion.enabled`.\n"
+                            "- **GitHub Copilot app**: open **Settings**, search for \"HydraFusion\", turn it on, "
+                            "then select it in the model picker.\n\n"
+                            "## Decision Guide\n\n"
+                            "| Situation | Suggested mode |\n"
+                            "|-----------|----------------|\n"
+                            "| You need a specific model's behaviour | Pick that model manually |\n"
+                            "| Docs, small edits, quick explanations | Auto — **Efficiency** |\n"
+                            "| Everyday coding, refactoring, tests | Auto — **Balance** |\n"
+                            "| Architecture, tricky debugging, security review | Auto — **Intelligence** |\n"
+                            "| Self-contained coding task that benefits from review or escalation | **HydraFusion** |\n\n"
+                            "## Tips\n\n"
+                            "- HydraFusion works best today on first-turn, single-prompt coding tasks.\n"
+                            "- It is a research preview: behaviour and availability may change.\n"
+                            "- Check which model handled a response to understand cost and quality.\n"
+                        ),
+                    },
+                ],
+                "quiz_questions": [
+                    {
+                        "question": "What must happen before Copilot Business or Enterprise users can use HydraFusion?",
+                        "options": [
+                            "They must install a separate VS Code extension",
+                            "An administrator must enable preview features",
+                            "They must switch to a personal account",
+                            "Nothing — it is enabled for everyone by default",
+                        ],
+                        "correct_answer": "An administrator must enable preview features",
+                        "explanation": "For Copilot Business and Enterprise, HydraFusion requires an administrator to allow preview features.",
+                    },
+                ],
+            },
+        ],
+    },
 ]
 
 USERS = [
@@ -680,30 +910,29 @@ async def main() -> None:
     async with AsyncSessionLocal() as db:
         from sqlalchemy import select
 
-        # Idempotency guard — skip everything if admin already exists
         result = await db.execute(
             select(User).where(User.email == "admin@platform.local")
         )
         existing_admin = result.scalar_one_or_none()
-        if existing_admin is not None:
-            print("Database already seeded — skipping.")
-            return
 
         # ----------------------------------------------------------------
         # Create users
         # ----------------------------------------------------------------
-        print("Creating default users…")
-        for user_data in USERS:
-            user = User(
-                id=str(uuid.uuid4()),
-                name=user_data["name"],
-                email=user_data["email"],
-                hashed_password=hash_password(user_data["password"]),
-                role=user_data["role"],
-                created_at=datetime.utcnow(),
-                is_active=True,
-            )
-            db.add(user)
+        users_created = 0
+        if existing_admin is None:
+            print("Creating default users...")
+            for user_data in USERS:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    name=user_data["name"],
+                    email=user_data["email"],
+                    hashed_password=hash_password(user_data["password"]),
+                    role=user_data["role"],
+                    created_at=datetime.utcnow(),
+                    is_active=True,
+                )
+                db.add(user)
+                users_created += 1
 
         await db.flush()  # obtain user IDs before FK usage
 
@@ -717,7 +946,11 @@ async def main() -> None:
         # Create courses
         # ----------------------------------------------------------------
         print("Creating starter courses…")
+        existing_titles = set((await db.scalars(select(Course.title))).all())
+        courses_created = 0
         for course_data in COURSES:
+            if course_data["title"] in existing_titles:
+                continue
             course = Course(
                 id=str(uuid.uuid4()),
                 title=course_data["title"],
@@ -764,10 +997,13 @@ async def main() -> None:
                     )
                     db.add(question)
 
+            existing_titles.add(course_data["title"])
+            courses_created += 1
+
         await db.commit()
-        print("Seeding complete ✅")
-        print(f"  • {len(USERS)} users created")
-        print(f"  • {len(COURSES)} courses created")
+        print("Seeding complete")
+        print(f"  {users_created} users created")
+        print(f"  {courses_created} courses created")
 
 
 if __name__ == "__main__":
