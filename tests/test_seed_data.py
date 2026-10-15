@@ -10,6 +10,11 @@ os.environ.setdefault("GITHUB_MODELS_ENDPOINT", "https://models.example.test")
 os.environ.setdefault("SECRET_KEY", "x" * 32)
 
 from src.seed import COURSES  # noqa: E402
+from src import seed  # noqa: E402
+from src.database import Base  # noqa: E402
+from src.models import Course, Enrollment, Lesson, ProgressRecord, User  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # noqa: E402
 
 
 @pytest.mark.parametrize("course", COURSES, ids=lambda c: c["title"])
@@ -50,3 +55,71 @@ def test_hydrafusion_safety_and_client_eligibility() -> None:
         "Business, and Enterprise users"
     ) in setup
     assert "an administrator must allow preview features" in setup
+
+
+@pytest.mark.asyncio
+async def test_seed_backfills_courses_without_changing_existing_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Backfill an old catalog once, preserving author edits and learner progress."""
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    sessions = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def init_test_db() -> None:
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+
+    monkeypatch.setattr(seed, "init_db", init_test_db)
+    monkeypatch.setattr(seed, "AsyncSessionLocal", sessions)
+    monkeypatch.setattr(seed, "hash_password", lambda password: "test-hash")
+    monkeypatch.setattr(seed, "COURSES", COURSES[:3])
+    try:
+        await seed.main()
+        async with sessions() as db:
+            learner = await db.scalar(select(User).where(User.role == "learner"))
+            course = await db.scalar(select(Course).limit(1))
+            lesson = await db.scalar(select(Lesson).limit(1))
+            assert learner is not None and course is not None and lesson is not None
+            learner.hashed_password = "changed-password-hash"
+            course.description = "Administrator-edited description"
+            lesson.markdown_content = "Administrator-edited lesson"
+            db.add(Enrollment(user_id=learner.id, course_id=course.id, status="in_progress"))
+            db.add(ProgressRecord(
+                user_id=learner.id, lesson_id=lesson.id,
+                module_id=lesson.module_id, completed=True,
+            ))
+            await db.commit()
+
+        async def snapshot() -> dict[str, dict[str, dict]]:
+            async with sessions() as db:
+                return {
+                    table.name: {
+                        row["id"]: dict(row)
+                        for row in (await db.execute(select(table))).mappings()
+                    }
+                    for table in Base.metadata.sorted_tables
+                }
+
+        before = await snapshot()
+        monkeypatch.setattr(seed, "COURSES", COURSES)
+        await seed.main()
+        after = await snapshot()
+        for table, rows in before.items():
+            for row_id, row in rows.items():
+                assert after[table][row_id] == row
+        assert len(after["users"]) == 2
+        assert len(after["courses"]) == 4
+        copilot = next(
+            row for row in after["courses"].values() if row["title"] == "GitHub Copilot"
+        )
+        modules = {
+            row["id"] for row in after["modules"].values()
+            if row["course_id"] == copilot["id"]
+        }
+        assert len(modules) == 3
+        assert sum(row["module_id"] in modules for row in after["lessons"].values()) == 5
+        assert sum(row["module_id"] in modules for row in after["quiz_questions"].values()) == 5
+        await seed.main()
+        assert await snapshot() == after
+    finally:
+        await engine.dispose()

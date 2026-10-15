@@ -8,7 +8,8 @@ Usage::
 
     python -m src.seed
 
-The script is idempotent — if the admin user already exists it exits early.
+The script adds missing courses by title without replacing existing content.
+Existing users are left unchanged when the default admin already exists.
 """
 
 import asyncio
@@ -909,30 +910,29 @@ async def main() -> None:
     async with AsyncSessionLocal() as db:
         from sqlalchemy import select
 
-        # Idempotency guard — skip everything if admin already exists
         result = await db.execute(
             select(User).where(User.email == "admin@platform.local")
         )
         existing_admin = result.scalar_one_or_none()
-        if existing_admin is not None:
-            print("Database already seeded — skipping.")
-            return
 
         # ----------------------------------------------------------------
         # Create users
         # ----------------------------------------------------------------
-        print("Creating default users…")
-        for user_data in USERS:
-            user = User(
-                id=str(uuid.uuid4()),
-                name=user_data["name"],
-                email=user_data["email"],
-                hashed_password=hash_password(user_data["password"]),
-                role=user_data["role"],
-                created_at=datetime.utcnow(),
-                is_active=True,
-            )
-            db.add(user)
+        users_created = 0
+        if existing_admin is None:
+            print("Creating default users...")
+            for user_data in USERS:
+                user = User(
+                    id=str(uuid.uuid4()),
+                    name=user_data["name"],
+                    email=user_data["email"],
+                    hashed_password=hash_password(user_data["password"]),
+                    role=user_data["role"],
+                    created_at=datetime.utcnow(),
+                    is_active=True,
+                )
+                db.add(user)
+                users_created += 1
 
         await db.flush()  # obtain user IDs before FK usage
 
@@ -946,7 +946,11 @@ async def main() -> None:
         # Create courses
         # ----------------------------------------------------------------
         print("Creating starter courses…")
+        existing_titles = set((await db.scalars(select(Course.title))).all())
+        courses_created = 0
         for course_data in COURSES:
+            if course_data["title"] in existing_titles:
+                continue
             course = Course(
                 id=str(uuid.uuid4()),
                 title=course_data["title"],
@@ -993,10 +997,13 @@ async def main() -> None:
                     )
                     db.add(question)
 
+            existing_titles.add(course_data["title"])
+            courses_created += 1
+
         await db.commit()
-        print("Seeding complete ✅")
-        print(f"  • {len(USERS)} users created")
-        print(f"  • {len(COURSES)} courses created")
+        print("Seeding complete")
+        print(f"  {users_created} users created")
+        print(f"  {courses_created} courses created")
 
 
 if __name__ == "__main__":
